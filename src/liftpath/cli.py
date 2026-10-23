@@ -41,7 +41,7 @@ from liftpath.rescue import (
     rescue_note,
     strongest_edges,
 )
-from liftpath.route import item_schedule, score_transitions
+from liftpath.route import item_schedule, projection_tables, score_transitions
 from liftpath.scopes import build_sample
 from liftpath.sim import expected_results, run_world
 from liftpath.states import (
@@ -196,6 +196,8 @@ def step_app_data(cfg: Config) -> None:
         figures=figures,
         out_dir=out,
         rescue_dir=folder / "rescue",
+        plan_dir=folder / "plan",
+        sim_dir=PROCESSED_DIR / "synthetic" / "sim",
     )
     total = sum(sizes.values())
     print(f"{out.as_posix()}: {len(sizes)} files, {total / 1e6:.2f} MB")
@@ -213,7 +215,11 @@ def step_plan(cfg: Config) -> None:
     register_canonical(con, canonical_dir(cfg))
     schedule = item_schedule(con, cfg)
     schedule.to_parquet(out / "schedule.parquet", index=False)
-    print(f"transitions: {transitions.shape}, schedule: {schedule.shape}")
+    projections, rates = projection_tables(transitions, cfg)
+    projections.to_parquet(out / "projections.parquet", index=False)
+    rates.to_parquet(out / "goal_rates.parquet", index=False)
+    print(f"transitions: {transitions.shape}, schedule: {schedule.shape}, "
+          f"projections: {projections.shape}, goal rates: {rates.shape}")
 
 
 def step_rescue(cfg: Config) -> None:

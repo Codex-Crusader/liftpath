@@ -5,15 +5,16 @@ import json
 import math
 import sys
 from dataclasses import asdict
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from liftpath.config import Config
 from liftpath.live import CUTOFF_FILE, cutoff_row, live_tables_exist, load_lift_tables
-from liftpath.paths import APP_DIR, scope_dir
+from liftpath.paths import APP_DIR
 from liftpath.recommend import State, label, recommend
-from liftpath.route import ITEM_NOTE, PROJECTION_NOTE, plan_route
+from liftpath.route import ITEM_NOTE, PROJECTION_NOTE, plan_route, table_projector
 
 GOAL_ARGS = {"pass": "goal_pass", "distinction": "goal_distinction"}
 SCORE_BANDS = ("none", "low", "mid", "high")
@@ -72,6 +73,17 @@ def recommend_payload(args: argparse.Namespace, cfg: Config) -> dict:
             "rationale": rec.rationale, "tables": tables_source(goal)}
 
 
+def app_plan(app_dir: Path = APP_DIR):
+    """The route lookups and the item schedule from the app data (SPEC 19 safe copies)."""
+    paths = [app_dir / f"plan_{n}.parquet" for n in ("projections", "goal_rates", "schedule")]
+    missing = [p.name for p in paths if not p.exists()]
+    if missing:
+        raise ValueError(f"No route data in {app_dir} ({', '.join(missing)}). "
+                         "Run make plan and then make app-data.")
+    projections, rates, schedule = (pd.read_parquet(p) for p in paths)
+    return table_projector(projections, rates), schedule
+
+
 def latest_course(schedule: pd.DataFrame, module: str) -> str | None:
     """The latest presentation of the module in the item schedule (for the item lists)."""
     courses = sorted(c for c in schedule["course_id"].unique() if c.startswith(f"{module}_"))
@@ -80,12 +92,10 @@ def latest_course(schedule: pd.DataFrame, module: str) -> str | None:
 
 def route_payload(args: argparse.Namespace, cfg: Config) -> dict:
     state, goal = engine_state(args)
-    plan = scope_dir(cfg) / "plan"
-    transitions = pd.read_parquet(plan / "transitions.parquet")
-    schedule = pd.read_parquet(plan / "schedule.parquet")
+    projector, schedule = app_plan()
     course_id = latest_course(schedule, args.module)
     point = pd.Series({**asdict(state), "week": args.week, "course_id": course_id})
-    route = plan_route(point, goal, load_lift_tables(goal), transitions, schedule, cfg)
+    route = plan_route(point, goal, load_lift_tables(goal), projector, schedule, cfg)
     return {"state": {**asdict(state), "week": args.week}, "goal": goal,
             "course_id": course_id, "effort": route.effort,
             "steps": [asdict(step) for step in route.steps],

@@ -5,6 +5,7 @@ refresh_tables, the same way train outcomes feed the app tables.
 """
 
 import os
+import shutil
 import sqlite3
 from dataclasses import asdict
 from datetime import UTC, datetime
@@ -101,12 +102,22 @@ def cutoff_row(cutoffs: pd.DataFrame, module: str, week: int) -> pd.Series:
 
 def init_db(path: Path) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
-    con = sqlite3.connect(path)
+    # The app reruns on other threads. One connection serves them, one call at a time.
+    con = sqlite3.connect(path, check_same_thread=False)
     # Demo store: fewer disk syncs per commit. A crash can lose the last few writes.
     con.execute("PRAGMA journal_mode=WAL")
     con.execute("PRAGMA synchronous=NORMAL")
     con.executescript(SCHEMA)
     return con
+
+
+def reset_live(folder: Path, db_name: str) -> None:
+    """Delete the demo database (with its WAL files) and the live tables."""
+    for suffix in ("", "-wal", "-shm"):
+        (folder / f"{db_name}{suffix}").unlink(missing_ok=True)
+    tables = folder / "tables"
+    if tables.exists():
+        shutil.rmtree(tables)
 
 
 def add_student(con: sqlite3.Connection, student_id: str, module: str) -> None:

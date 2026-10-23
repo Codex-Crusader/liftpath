@@ -17,7 +17,7 @@
 | C | Trap comparison | done |
 | D | Live mode and engine CLI | done |
 | E | Rescue map | done |
-| F | App restructure | not started |
+| F | App restructure | done |
 | G | Presentation package and docs | not started |
 
 ## Gate results
@@ -180,6 +180,16 @@
 - Phase E app data: `build_app_data` copies `<scope>/rescue/` when it exists: `rescue_edges.parquet` (counts suppressed), `rescue_items.parquet` (n_students suppressed, 1 row hidden) and `rescue_meta.json` (edge counts, shuffle result, keystones).
 - Phase E: new dependencies networkx 3.7 and kaleido (plotly PNG export). Kaleido 1.x renders with the installed Chrome. The fresh-clone `make all` in Phase G needs Chrome on the machine.
 - Phase B: `make all` does not run `sim`. Phase F app data and a fresh-clone build need `make sim` (40 s).
+- Phase F privacy: the route needs the score transitions, and the raw transition rows hold counts below display_min_count. A test that dropped rows with n < 5 changed the projections by up to 11.9 pp (mean 0.79 pp), and 1 of 100 routes got different steps. So the app does not get transition rows. `make plan` now writes two lookup tables from the full transitions: `plan/projections.parquet` (22,608 rows, next-state shares per state, action and effort) and `plan/goal_rates.parquet` (6,384 rows). They hold rates only, no counts. `route.Projector` (frozen dataclass of callables) hides the source: `transitions_projector` reads raw transitions, `table_projector` reads the lookup tables. Table routes match raw routes in 200 of 200 checks. A route takes about 153 ms with the tables and 228 ms raw. Goal-rate weeks span 0 to the global last week + 1, which fixed a CCC week 37 mismatch.
+- Phase F: `make plan` now takes about 2 min 40 s (it was about 1 min) because it writes the lookup tables.
+- Phase F app data: `plan_projections.parquet`, `plan_goal_rates.parquet`, `plan_schedule.parquet` (only rows with clicks >= display_min_count), `sim_results.parquet` and `sim_estimates.parquet`. `meta.json` has a new key `modules`. RECOVERY_COLS now include due_day and next_due_day (Phase A note). data/app: 34 files, 1.7 MB. `engine.app_plan` reads the plan copies, so the route command works with only `data/app` and gives a clean error if the files are missing.
+- Phase F: `make all` is now `data states lifts recover eval plan rescue sim app-data`.
+- Phase F: the trap lines and the student chart still come from the app tables, not the live tables. The Try it tab uses the live tables after a refresh.
+- Phase F app: tabs Your route, Simulator, Try it, Rescue map, Evidence. The old tabs are gone. `.streamlit/config.toml` sets the light theme, because the style.py palette is for light mode only and the dark theme made the chart labels unreadable. The live store is one SQLite file per server process (`live_dir()/live.db`). It is reset at start, so data resets on restart. Refresh is off when `data/processed/<scope>/decision_points.parquet` is missing, and the tab says why. The simulator table shows cohort 5 next to the mean of cohorts 2 to 5, and the caption says that the experimental estimate sits above the true effect and that the hidden-world explore win depends on that bias.
+- Phase F timing: first app run on the full data/app 6.0 s (cache fill), second run 0.39 to 0.48 s. Limit 3 s.
+- Phase F tests: `tests/test_app.py` builds synthetic app data with plan tables, a dev-size sim of both worlds and rescue edges, then runs one smoke test per tab with one interaction each, plus one run on the committed data/app. LIVE_DATA_DIR points to a temp folder. The file takes about 28 s, and `make test` now takes about 80 s (it was about 55 to 68 s).
+- Phase F: `scripts/demo_trap.py` uses widget keys now. Rerun result: the same three cards as in Phase C (agree: 391249 week 0, no clear help: 123087 week 0, negative lift: 334441 week 36).
+- Phase F, for Phase G: the header reads `reports/headline.json` when it exists. Format: `{"metrics": [{"label": str, "value": str, "help": str or null}, ...]}`, 2 to 4 items, values already formatted (for example "+2.9 pp"). Without the file, the header shows LiftPath net lift (pass), recommend share and the user_cf disagreement from eval_results.json.
 
 ## Blocked
 - None.

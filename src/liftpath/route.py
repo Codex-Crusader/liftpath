@@ -5,6 +5,7 @@ step action. Only train points enter the transitions, so no test outcome enters 
 Item examples use clicks only, never outcomes.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 import duckdb
@@ -21,6 +22,7 @@ KEEP = "_keep"
 KEEP_LABEL = "Keep your current plan"
 SCORE_ORDER = ["none", "low", "mid", "high"]
 GOALS = ("goal_pass", "goal_distinction")
+PLAN_EFFORTS = ("low", "mid", "high")
 PROJECTION_NOTE = "Projection from past students, not a guarantee."
 ITEM_NOTE = "Schedule rebuilt from course activity. A real LMS has the exact calendar."
 ITEMS_PER_STEP = 3
@@ -170,20 +172,19 @@ def project(transitions: pd.DataFrame, module: str, week: int, score_band: str,
     return None
 
 
-def propagate(transitions: pd.DataFrame, module: str, week: int, bands: pd.Series,
-              effort: str, action: str, cfg: Config) -> tuple[str, pd.Series] | None:
+def propagate(pj: "Projector", module: str, week: int, bands: pd.Series, effort: str,
+              action: str) -> tuple[str, pd.Series] | None:
     """Mix the projections of every current score band, weighted by its share.
 
     None if the most likely band has no projection. Other bands without one drop out.
     """
     top = mode(bands[bands > 0], SCORE_ORDER)
-    head = project(transitions, module, week, top, effort, action, cfg)
+    head = pj.project(module, week, top, effort, action)
     if head is None:
         return None
     mixed = pd.Series(0.0, index=SCORE_ORDER)
     for band, share in bands[bands > 0].items():
-        proj = head if band == top else project(transitions, module, week, band, effort,
-                                                action, cfg)
+        proj = head if band == top else pj.project(module, week, band, effort, action)
         if proj is not None:
             mixed += share * proj.bands
     return head.block, mixed / mixed.sum()
@@ -219,11 +220,82 @@ def goal_rate(transitions: pd.DataFrame, module: str, week: int, score_band: str
     return np.nan
 
 
-def expected_rate(transitions: pd.DataFrame, module: str, week: int, bands: pd.Series,
-                  effort: str, goal: str, cfg: Config) -> float:
+@dataclass(frozen=True)
+class Projector:
+    """The three lookups a route needs. Built from raw transitions or from precomputed tables.
+
+    The app ships only the tables, because the raw transitions hold counts below
+    display_min_count (SPEC 19). A projection itself needs min_count points.
+    """
+    project: Callable[[str, int, str, str, str], Projection | None]
+    goal_rate: Callable[[str, int, str, str, str], float]
+    last_week: Callable[[str], int | None]
+
+
+def transitions_projector(transitions: pd.DataFrame, cfg: Config) -> Projector:
+    last = transitions.groupby("module")["week"].max()
+    return Projector(
+        project=lambda m, w, b, e, a: project(transitions, m, w, b, e, a, cfg),
+        goal_rate=lambda m, w, b, e, g: goal_rate(transitions, m, w, b, e, g, cfg),
+        last_week=lambda m: int(last[m]) if m in last.index else None)
+
+
+def projection_tables(transitions: pd.DataFrame,
+                      cfg: Config) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Every projection and goal rate a route can ask for, as rows of shares and rates.
+
+    Projections: per (module, week, score band, plan effort, action). Goal rates: per
+    (module, week, score band, plan effort, goal), for weeks 0 to the last week of any
+    module + 1, because test presentations can run longer than the train ones and the
+    goal rate then backs off to other modules.
+    """
+    proj_rows, rate_rows = [], []
+    actions = sorted(transitions["action"].unique())
+    rate_weeks = int(transitions["week"].max()) + 2
+    for module, last in transitions.groupby("module")["week"].max().items():
+        for week in range(rate_weeks):
+            for band in SCORE_ORDER:
+                for effort in PLAN_EFFORTS:
+                    for goal in GOALS:
+                        rate_rows.append((module, week, band, effort, goal, goal_rate(
+                            transitions, module, week, band, effort, goal, cfg)))
+                    if week > last:
+                        continue
+                    for action in actions:
+                        p = project(transitions, module, week, band, effort, action, cfg)
+                        if p is not None:
+                            proj_rows.append((module, week, band, effort, action, p.block,
+                                              p.level, p.source, *p.bands.to_numpy()))
+    keys = ["module", "week", "score_band", "effort", "action"]
+    projections = pd.DataFrame(proj_rows, columns=[*keys, "block", "level", "source",
+                                                   *[f"share_{b}" for b in SCORE_ORDER]])
+    rates = pd.DataFrame(rate_rows, columns=[*keys[:4], "goal", "rate"])
+    return projections, rates
+
+
+def table_projector(projections: pd.DataFrame, rates: pd.DataFrame) -> Projector:
+    shares = projections[[f"share_{b}" for b in SCORE_ORDER]].to_numpy()
+    keys = zip(projections["module"], projections["week"], projections["score_band"],
+               projections["effort"], projections["action"], strict=True)
+    found = {
+        key: Projection(block=block, bands=pd.Series(row, index=SCORE_ORDER), level=int(level),
+                        source=source)
+        for key, block, level, source, row in zip(
+            keys, projections["block"], projections["level"], projections["source"], shares,
+            strict=True)}
+    rate = rates.set_index(["module", "week", "score_band", "effort", "goal"])["rate"].to_dict()
+    last = projections.groupby("module")["week"].max()
+    return Projector(
+        project=lambda m, w, b, e, a: found.get((m, w, b, e, a)),
+        goal_rate=lambda m, w, b, e, g: float(rate.get((m, w, b, e, g), np.nan)),
+        last_week=lambda m: int(last[m]) if m in last.index else None)
+
+
+def expected_rate(pj: "Projector", module: str, week: int, bands: pd.Series, effort: str,
+                  goal: str) -> float:
     """The goal rate of each score band, weighted by the band share."""
     shares = bands[bands > 0]
-    rates = [goal_rate(transitions, module, week, b, effort, goal, cfg) for b in shares.index]
+    rates = [pj.goal_rate(module, week, b, effort, goal) for b in shares.index]
     return float(np.dot(shares.to_numpy(), rates))
 
 
@@ -236,11 +308,11 @@ def start_bands(score_band: str) -> pd.Series:
     return pd.Series([float(b == score_band) for b in SCORE_ORDER], index=SCORE_ORDER)
 
 
-def typical_bands(transitions: pd.DataFrame, module: str, week: int, last_week: int,
-                  bands: pd.Series, effort: str, cfg: Config) -> tuple[int, pd.Series]:
+def typical_bands(pj: "Projector", module: str, week: int, last_week: int,
+                  bands: pd.Series, effort: str) -> tuple[int, pd.Series]:
     """Project score band shares with all points (KEEP) from week up to last_week."""
     while week < last_week:
-        nxt = propagate(transitions, module, week, bands, effort, KEEP, cfg)
+        nxt = propagate(pj, module, week, bands, effort, KEEP)
         if nxt is None:
             break
         _, bands = nxt
@@ -249,7 +321,7 @@ def typical_bands(transitions: pd.DataFrame, module: str, week: int, last_week: 
 
 
 def plan_route(student_point: pd.Series, goal: str, tables: dict[int, pd.DataFrame],
-               transitions: pd.DataFrame, schedule: pd.DataFrame, cfg: Config,
+               transitions: "pd.DataFrame | Projector", schedule: pd.DataFrame, cfg: Config,
                effort: str | None = None) -> Route:
     """Route of up to plan_horizon_weeks steps from the student's decision point.
 
@@ -263,8 +335,10 @@ def plan_route(student_point: pd.Series, goal: str, tables: dict[int, pd.DataFra
     bands = start_bands(student_point["score_band"])
     effort_now = student_point["effort_band"]
     steps, stop_reason = [], "The route reached the plan horizon."
-    module_weeks = transitions.loc[transitions["module"] == module, "week"]
-    last_source = int(module_weeks.max()) if not module_weeks.empty else start_week - 1
+    pj = (transitions if isinstance(transitions, Projector)
+          else transitions_projector(transitions, cfg))
+    last = pj.last_week(module)
+    last_source = start_week - 1 if last is None else last
 
     for _ in range(cfg.plan_horizon_weeks):
         band = mode(bands[bands > 0], SCORE_ORDER)
@@ -284,7 +358,7 @@ def plan_route(student_point: pd.Series, goal: str, tables: dict[int, pd.DataFra
         if week > last_source:
             stop_reason = f"The course ends at week {week}."
             break
-        nxt = propagate(transitions, module, week, bands, plan, action, cfg)
+        nxt = propagate(pj, module, week, bands, plan, action)
         if nxt is None:
             stop_reason = f"Not enough past students to project week {week + 1}."
             break
@@ -293,13 +367,12 @@ def plan_route(student_point: pd.Series, goal: str, tables: dict[int, pd.DataFra
 
     if not steps:
         return Route((), np.nan, np.nan, plan, goal, stop_reason)
-    typical_week, typical = typical_bands(transitions, module, start_week, week,
-                                          start_bands(student_point["score_band"]), plan, cfg)
+    typical_week, typical = typical_bands(pj, module, start_week, week,
+                                          start_bands(student_point["score_band"]), plan)
     return Route(
         steps=tuple(steps),
-        projected_route=expected_rate(transitions, module, week, bands, plan, goal, cfg),
-        projected_typical=expected_rate(transitions, module, typical_week, typical, plan,
-                                        goal, cfg),
+        projected_route=expected_rate(pj, module, week, bands, plan, goal),
+        projected_typical=expected_rate(pj, module, typical_week, typical, plan, goal),
         effort=plan, goal=goal, stop_reason=stop_reason)
 
 

@@ -21,6 +21,7 @@ TIMEOUT_S = 300
 POINTS = ROOT / "data" / "processed" / "full" / "decision_points.parquet"
 RESULTS = ("distinction", "pass", "not pass")
 CASES = ("agree", "no clear help", "negative lift")
+TRAP_STARTS = ("Both methods agree", "Similar students", "Students who reached")
 
 
 def final_results() -> pd.DataFrame:
@@ -60,14 +61,15 @@ def pick_cases(students: pd.DataFrame, results: pd.DataFrame) -> list[tuple[str,
 def show(row: pd.Series) -> list[str]:
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=TIMEOUT_S)
     at.run()
-    at.selectbox[0].set_value(row["module"]).run()
-    at.selectbox[1].set_value(f"{row['student_id']} ({row['course_id']})").run()
-    at.selectbox[2].set_value(row["week"]).run()
+    at.selectbox(key="route_module").set_value(row["module"]).run()
+    at.selectbox(key="route_student").set_value(f"{row['student_id']} ({row['course_id']})")
+    at.run()
+    at.selectbox(key="route_week").set_value(row["week"]).run()
     assert not at.exception
-    tab = at.tabs[0]
-    texts = [m.value for m in tab.subheader] + [m.value for m in tab.markdown]
-    start = texts.index("**What common advice says**")
-    return [texts[0], *texts[start + 1:]]
+    texts = [m.value for m in at.tabs[0].markdown]
+    first_step = texts[texts.index(f"**Week {row['week']}**") + 1]
+    return [f"Route week {row['week']}: {first_step}",
+            *[t for t in texts if t.startswith(TRAP_STARTS)]]
 
 
 def main() -> None:

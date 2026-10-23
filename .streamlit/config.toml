@@ -1,0 +1,6 @@
+# The chart palette in src/liftpath/style.py is for light mode only (BUILD2 Phase F).
+[theme]
+base = "light"
+backgroundColor = "#fcfcfb"
+textColor = "#0b0b0b"
+primaryColor = "#2a78d6"

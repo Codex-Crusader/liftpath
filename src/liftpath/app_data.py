@@ -31,7 +31,12 @@ STATE_COLS = ["course_id", "module", "presentation", "student_id", "week", "week
               "score_band", "effort_band"]
 LIFT_COUNTS = ["n_did", "n_did_not"]
 AUDIT_COUNTS = ["n1", "k1", "u1", "n0", "k0", "u0"]
-RECOVERY_COLS = ["course_id", "module", "student_id", "assessment_id", "score", "low_band"]
+RECOVERY_COLS = ["course_id", "module", "student_id", "assessment_id", "score", "low_band",
+                 "due_day", "next_due_day"]
+PLAN_FILES = {"projections.parquet": "plan_projections.parquet",
+              "goal_rates.parquet": "plan_goal_rates.parquet"}
+SIM_FILES = {"results.parquet": "sim_results.parquet",
+             "estimates.parquet": "sim_estimates.parquet"}
 FIGURES = ("eval_lift.png", "fairness.png", "synthetic_truth.png")
 EVAL_COUNT_KEYS = ("n_points", "common_n_points")
 CONFIG_KEYS = ("min_count", "display_min_count", "prior_strength", "z", "low_score")
@@ -75,7 +80,9 @@ def suppress_eval(results: dict, cfg: Config) -> dict:
 def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
                    recovery_points: pd.DataFrame, eval_results: dict | None,
                    fairness: pd.DataFrame | None, figures: dict[str, Path],
-                   out_dir: Path, rescue_dir: Path | None = None) -> dict[str, int]:
+                   out_dir: Path, rescue_dir: Path | None = None,
+                   plan_dir: Path | None = None,
+                   sim_dir: Path | None = None) -> dict[str, int]:
     """Write the app files to out_dir. Return the size in bytes of each file."""
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -116,6 +123,18 @@ def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
         write(suppress_counts(table, LIFT_COUNTS, cfg),
               out_dir / f"goal_recover_level{level}.parquet")
 
+    # The route uses precomputed projections and goal rates (shares and rates from at least
+    # min_count points), not the raw transitions, which hold counts below display_min_count.
+    if plan_dir is not None and (plan_dir / "projections.parquet").exists():
+        for source, target in PLAN_FILES.items():
+            shutil.copy2(plan_dir / source, out_dir / target)
+        schedule = pd.read_parquet(plan_dir / "schedule.parquet")
+        write(schedule[schedule["clicks"] >= cfg.display_min_count],
+              out_dir / "plan_schedule.parquet")
+    if sim_dir is not None and (sim_dir / "results.parquet").exists():
+        for source, target in SIM_FILES.items():
+            shutil.copy2(sim_dir / source, out_dir / target)
+
     if rescue_dir is not None and (rescue_dir / "edges.parquet").exists():
         edges = pd.read_parquet(rescue_dir / "edges.parquet")
         write(suppress_counts(edges, LIFT_COUNTS, cfg), out_dir / "rescue_edges.parquet")
@@ -137,6 +156,7 @@ def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
             shutil.copy2(source, out_dir / "figures" / name)
 
     meta = {"scope": cfg.scope, "candidates": candidates, "goals": list(GOALS),
+            "modules": sorted(points["module"].unique()),
             "config": {k: getattr(cfg, k) for k in CONFIG_KEYS},
             "students": int(students[STUDENT_KEY].drop_duplicates().shape[0])}
     (out_dir / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")

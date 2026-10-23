@@ -52,4 +52,4 @@ lint:
 app:
 	uv run streamlit run app/streamlit_app.py
 
-all: data states lifts recover eval plan rescue app-data
+all: data states lifts recover eval plan rescue sim app-data
