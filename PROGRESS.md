@@ -16,7 +16,7 @@
 | B | Simulator and learning loop | done |
 | C | Trap comparison | done |
 | D | Live mode and engine CLI | done |
-| E | Rescue map | not started |
+| E | Rescue map | done |
 | F | App restructure | not started |
 | G | Presentation package and docs | not started |
 
@@ -169,6 +169,14 @@
 - Phase D, for Phase F: `students.parquet` holds status, level and trap columns from the app tables. When live tables exist, the chart level and the trap lines on the student tab can differ from the live card. advice has a new status, "explore": `headline()` and the Try it tab must handle it. The route command reads `data/processed/<scope>/plan`. A deploy with only `data/app` does not have it, and the command then fails with a traceback, not a clean message.
 - Phase D: `make test` now takes about 56 s (before: about 24 s). The advise test takes about 35 s of that (500 calls).
 - Phase D, for Phase F: refresh_tables needs the train points in `data/processed`. A deploy with only `data/app` does not have them, so the "Try it" tab must handle that case. The app caches `lift_tables` with st.cache_data, so the tab must clear that cache after a refresh. The live database path is `live_db_path` in config.yaml.
+- Phase E: `src/liftpath/rescue.py` and `make rescue` (also in `make all`, after plan and before app-data). Edges come from train recovery points only: `estimate_lifts` with cell (module, assessment_id), effort = window effort band, treatments rev_<type>, goal_recover. An edge needs min(n_did, n_did_not) >= rescue_min_count (20) and lift > 0. Solid if ci_low > 0, else dashed. Weight = lift. `rescue_edges` and `rescue_items` raise an error on test points.
+- Phase E result, full scope: 97 supported (assessment, type) rows in 114 train cells. 2 solid edges, both in CCC_2014B: url to assessment 24286 (due day 18), lift +20.9% (range +9.0% to +32.8%, 78 and 139 cases), and subpage to assessment 24287 (due day 67), lift +18.9% (range +3.9% to +33.9%, 30 and 36 cases). 61 dashed edges: CCC 9, DDD 36, FFF 16. AAA, BBB, EEE and GGG have no supported edge.
+- Phase E shuffle check (new config key `rescue_null_runs: 100`): goal_recover shuffled within (module, assessment_id, effort band), seeded. Solid edge count under the shuffle: mean 0.95, 95th percentile 3, and 23% of runs give 2 or more. So the 2 solid edges are consistent with chance. The figure caption says so. Phase F and G must not present the keystone or the solid edges as a finding without this sentence.
+- Phase E deviation: the keystone uses solid edges only (weighted degree, weight = lift). BUILD2 builds the graph from both kinds. A dashed-edge keystone would rank types by the number of unclear edges. A module with no solid edge has no keystone. Keystones: CCC url, DDD none, FFF none. The strongest edge per assessment prefers a solid edge, else the dashed edge with the highest lift, and it keeps its style.
+- Phase E: figures only for modules with a solid edge: `reports/figures/rescue_CCC.png` (the Done-when needs only these). DDD and FFF have only dashed edges, and a draft DDD map was a tangle of 36 unclear lines. The app data keeps all edges. Figure layout: types in a left column, assessments on a due-day axis with one row per presentation, solid lines in the LiftPath blue (width grows with lift), dashed lines in gray.
+- Phase E items: per solid edge, the top 3 old items (active day before the due day) of that type that recovered train students revisited in the window (due day to next due day), ranked by distinct students, then clicks, then item_id. Same window rule as `recover.WINDOW_CLICKS_SQL`, and it reuses `ACTIVE_DAY_SQL`. url edge: item 730135 (45 students), 730126. subpage edge: items 730017, 730023, 730024.
+- Phase E app data: `build_app_data` copies `<scope>/rescue/` when it exists: `rescue_edges.parquet` (counts suppressed), `rescue_items.parquet` (n_students suppressed, 1 row hidden) and `rescue_meta.json` (edge counts, shuffle result, keystones).
+- Phase E: new dependencies networkx 3.7 and kaleido (plotly PNG export). Kaleido 1.x renders with the installed Chrome. The fresh-clone `make all` in Phase G needs Chrome on the machine.
 - Phase B: `make all` does not run `sim`. Phase F app data and a fresh-clone build need `make sim` (40 s).
 
 ## Blocked

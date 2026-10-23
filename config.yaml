@@ -30,5 +30,6 @@ sim_explore_share: 0.2
 sim_min_first_stage: 0.1
 sim_boot: 100
 rescue_min_count: 20
+rescue_null_runs: 100
 live_db_path: data/live/live.db
 trap_disagree_min: 0.30

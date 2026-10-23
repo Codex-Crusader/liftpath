@@ -75,7 +75,7 @@ def suppress_eval(results: dict, cfg: Config) -> dict:
 def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
                    recovery_points: pd.DataFrame, eval_results: dict | None,
                    fairness: pd.DataFrame | None, figures: dict[str, Path],
-                   out_dir: Path) -> dict[str, int]:
+                   out_dir: Path, rescue_dir: Path | None = None) -> dict[str, int]:
     """Write the app files to out_dir. Return the size in bytes of each file."""
     if out_dir.exists():
         shutil.rmtree(out_dir)
@@ -115,6 +115,13 @@ def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
     for level, table in rtables.items():
         write(suppress_counts(table, LIFT_COUNTS, cfg),
               out_dir / f"goal_recover_level{level}.parquet")
+
+    if rescue_dir is not None and (rescue_dir / "edges.parquet").exists():
+        edges = pd.read_parquet(rescue_dir / "edges.parquet")
+        write(suppress_counts(edges, LIFT_COUNTS, cfg), out_dir / "rescue_edges.parquet")
+        items = pd.read_parquet(rescue_dir / "items.parquet")
+        write(suppress_counts(items, ["n_students"], cfg), out_dir / "rescue_items.parquet")
+        shutil.copy2(rescue_dir / "meta.json", out_dir / "rescue_meta.json")
 
     if eval_results is not None:
         (out_dir / "eval_results.json").write_text(

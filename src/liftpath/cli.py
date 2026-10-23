@@ -7,6 +7,7 @@ import time
 from dataclasses import replace
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from liftpath.adapters.oulad import build_canonical
@@ -28,6 +29,17 @@ from liftpath.paths import (
 )
 from liftpath.recover import RECOVERY_LEVELS, build_recovery_points, recovery_tables
 from liftpath.report import run_eval
+from liftpath.rescue import (
+    DASHED,
+    SOLID,
+    build_graph,
+    keystone,
+    null_solid_counts,
+    rescue_edges,
+    rescue_figure,
+    rescue_items,
+    rescue_note,
+)
 from liftpath.route import item_schedule, score_transitions
 from liftpath.scopes import build_sample
 from liftpath.sim import expected_results, run_world
@@ -56,6 +68,7 @@ STEPS = (
     "app-data",
     "plan",
     "sim",
+    "rescue",
 )
 
 
@@ -181,6 +194,7 @@ def step_app_data(cfg: Config) -> None:
         fairness=pd.read_json(fairness_path) if fairness_path.exists() else None,
         figures=figures,
         out_dir=out,
+        rescue_dir=folder / "rescue",
     )
     total = sum(sizes.values())
     print(f"{out.as_posix()}: {len(sizes)} files, {total / 1e6:.2f} MB")
@@ -199,6 +213,40 @@ def step_plan(cfg: Config) -> None:
     schedule = item_schedule(con, cfg)
     schedule.to_parquet(out / "schedule.parquet", index=False)
     print(f"transitions: {transitions.shape}, schedule: {schedule.shape}")
+
+
+def step_rescue(cfg: Config) -> None:
+    folder = scope_dir(cfg)
+    candidates = json.loads((folder / "candidates.json").read_text(encoding="utf-8"))
+    points = pd.read_parquet(folder / "recovery_points.parquet")
+    train = points[points["split"] == "train"].reset_index(drop=True)
+    edges = rescue_edges(train, candidates, cfg)
+    null = null_solid_counts(train, candidates, cfg, cfg.rescue_null_runs)
+    n_solid = int((edges["style"] == SOLID).sum())
+    meta = {"solid_edges": n_solid, "dashed_edges": int((edges["style"] == DASHED).sum()),
+            "null_runs": cfg.rescue_null_runs, "null_mean": float(null.mean()),
+            "null_p95": float(np.percentile(null, 95)),
+            "null_share_at_least_observed": float((null >= n_solid).mean()),
+            "keystones": {}}
+    con = connect(cfg)
+    register_canonical(con, canonical_dir(cfg))
+    items = rescue_items(con, train, edges, cfg)
+    out = folder / "rescue"
+    out.mkdir(exist_ok=True)
+    edges.to_parquet(out / "edges.parquet", index=False)
+    items.to_parquet(out / "items.parquet", index=False)
+    note = rescue_note(meta)
+    figures = REPORTS_DIR / "figures"
+    for module in sorted(edges["module"].unique()):
+        found = keystone(build_graph(edges[edges["module"] == module]))
+        meta["keystones"][module] = found
+        # A figure only for modules with a solid edge. Dashed-only maps show nothing clear.
+        if found is not None:
+            rescue_figure(edges, module, note).write_image(figures / f"rescue_{module}.png",
+                                                           scale=2)
+    (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    print(f"edges by module and style: {edges.groupby(['module', 'style']).size().to_dict()}")
+    print(f"items: {len(items)}. meta: {meta}")
 
 
 def step_sim(cfg: Config) -> None:
@@ -247,6 +295,7 @@ HANDLERS = {
     "app-data": step_app_data,
     "plan": step_plan,
     "sim": step_sim,
+    "rescue": step_rescue,
 }
 
 

@@ -43,6 +43,7 @@ class Config:
     sim_min_first_stage: float
     sim_boot: int
     rescue_min_count: int
+    rescue_null_runs: int
     live_db_path: str
     trap_disagree_min: float
     scope: str  # data_scope after the DATA_SCOPE override
