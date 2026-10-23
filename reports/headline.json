@@ -1,0 +1,127 @@
+{
+  "story": "finding",
+  "headline": "Common advice and helpful advice differ for 76% of decisions. LiftPath advice: +2.9 points net lift. Collaborative filtering: +0.2.",
+  "goal": "goal_pass",
+  "trap_disagree_min": 0.3,
+  "real": {
+    "disagree_user_cf": 0.762282437550534,
+    "disagree_raw_success": 0.6564694242308183,
+    "common_n_points": 187992,
+    "liftpath_net": 0.02942156216842343,
+    "liftpath_net_ci_low": 0.021933418490385947,
+    "liftpath_net_ci_high": 0.03602917386087717,
+    "liftpath_coverage": 0.6178701041086362,
+    "user_cf_net": 0.0016202929256907569,
+    "user_cf_net_ci_low": -0.005246513682258191,
+    "user_cf_net_ci_high": 0.00769115839162226,
+    "user_cf_coverage": 0.9793231811580435,
+    "raw_success_net": 0.019135799295443307,
+    "common_liftpath_net": 0.029956382576999233,
+    "common_user_cf_net": 0.0006157015930719632,
+    "minus_raw_success_common": 0.0030051642588882627,
+    "minus_raw_success_common_ci_low": -0.005162758040366511,
+    "minus_raw_success_common_ci_high": 0.011606754490658499
+  },
+  "sim": {
+    "last_cohort": 5,
+    "first_mean_cohort": 2,
+    "worlds": {
+      "hidden_confounder": {
+        "final": {
+          "liftpath": 0.533,
+          "liftpath_explore": 0.61,
+          "none": 0.442,
+          "popular": 0.593,
+          "random": 0.464,
+          "raw_success": 0.575,
+          "user_cf": 0.527
+        },
+        "mean": {
+          "liftpath": 0.52025,
+          "liftpath_explore": 0.551,
+          "none": 0.4585,
+          "popular": 0.605,
+          "random": 0.486,
+          "raw_success": 0.52525,
+          "user_cf": 0.535
+        },
+        "liftpath_minus_none": {
+          "final": 0.09100000000000003,
+          "mean": 0.06174999999999997
+        },
+        "liftpath_minus_user_cf": {
+          "final": 0.006000000000000005,
+          "mean": -0.01475000000000004
+        },
+        "explore_minus_none": {
+          "final": 0.16799999999999998,
+          "mean": 0.09250000000000003
+        },
+        "explore_minus_liftpath": {
+          "final": 0.07699999999999996,
+          "mean": 0.030750000000000055
+        },
+        "best_mean_policy": "popular"
+      },
+      "standard": {
+        "final": {
+          "liftpath": 0.637,
+          "liftpath_explore": 0.484,
+          "none": 0.479,
+          "popular": 0.622,
+          "random": 0.509,
+          "raw_success": 0.597,
+          "user_cf": 0.532
+        },
+        "mean": {
+          "liftpath": 0.58725,
+          "liftpath_explore": 0.55575,
+          "none": 0.47075,
+          "popular": 0.612,
+          "random": 0.50125,
+          "raw_success": 0.564,
+          "user_cf": 0.525
+        },
+        "liftpath_minus_none": {
+          "final": 0.15800000000000003,
+          "mean": 0.11650000000000005
+        },
+        "liftpath_minus_user_cf": {
+          "final": 0.10499999999999998,
+          "mean": 0.06225000000000003
+        },
+        "explore_minus_none": {
+          "final": 0.0050000000000000044,
+          "mean": 0.08499999999999996
+        },
+        "explore_minus_liftpath": {
+          "final": -0.15300000000000002,
+          "mean": -0.031500000000000083
+        },
+        "best_mean_policy": "popular"
+      }
+    }
+  },
+  "metrics": [
+    {
+      "label": "Differs from 'similar students' advice",
+      "value": "76%",
+      "help": "Share of 187,992 common test student-weeks where LiftPath and collaborative filtering give different activities."
+    },
+    {
+      "label": "LiftPath net lift (pass)",
+      "value": "+2.9 pp",
+      "help": "95% range +2.2 pp to +3.6 pp. Test students. LiftPath advises on 62% of student-weeks."
+    },
+    {
+      "label": "Collaborative filtering net lift",
+      "value": "+0.2 pp",
+      "help": "95% range -0.5 pp to +0.8 pp. Test students."
+    },
+    {
+      "label": "Simulator: LiftPath minus no advice",
+      "value": "+15.8 pp",
+      "help": "Standard world, pass rate in cohort 5. Mean over cohorts 2 to 5: +11.7 pp. Synthetic students."
+    }
+  ]
+}

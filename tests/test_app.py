@@ -177,3 +177,33 @@ def test_committed_app_data(monkeypatch, tmp_path):
     at.run()
     assert not at.exception
     print(f"second run: {time.time() - start:.2f} s")
+
+
+def test_demo_script_clicks(monkeypatch, tmp_path):
+    """The clicks of docs/demo_script.md give the results the script names."""
+    folder = ROOT / "data" / "app"
+    if not (folder / "plan_projections.parquet").exists():
+        pytest.skip("needs make app-data")
+    monkeypatch.setenv("APP_DATA_DIR", str(folder))
+    monkeypatch.setenv("LIVE_DATA_DIR", str(tmp_path / "live"))
+    at = AppTest.from_file(APP, default_timeout=TIMEOUT_S)
+    at.run()
+    at.selectbox(key="route_module").set_value("GGG").run()
+    at.selectbox(key="route_student").set_value("388259 (GGG_2014J)").run()
+    at.selectbox(key="route_week").set_value(31).run()
+    assert not at.exception
+    route = texts(tab(at, "Your route"))
+    assert "**First, go back: quizzes** (score 10 on the last assessment)" in route
+    assert route[route.index("**Week 31**") + 1] == "course pages"
+    assert "Lift +7.6 pp (95% range +0.2 pp to +15.0 pp)." in route
+    at.selectbox(key="sim_world").set_value("hidden_confounder").run()
+    at.text_input(key="live_new_id").set_value("demo1")
+    at.selectbox(key="live_new_module").set_value("GGG")
+    next(b for b in at.button if b.label == "Add student").click().run()
+    at.selectbox(key="live_week").set_value(3).run()
+    at.selectbox(key="live_item_type").set_value("quiz")
+    at.number_input(key="live_clicks").set_value(40)
+    next(b for b in at.button if b.label == "Log activity").click().run()
+    at.button(key="live_advise").click().run()
+    assert not at.exception
+    assert [s.value for s in tab(at, "Try it").subheader] == ["Next step: discussion forum"]
