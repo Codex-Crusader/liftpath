@@ -1,5 +1,7 @@
 """Lift estimator and back-off levels (SPEC sections 7, 10 and 11)."""
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -89,14 +91,15 @@ def lift_tables(points: pd.DataFrame, candidates: list[str], goal_col: str,
     return tables
 
 
-def best_actions(tables: dict[int, pd.DataFrame], cfg: Config) -> dict[int, pd.DataFrame]:
+def best_actions(tables: dict[int, pd.DataFrame], cfg: Config,
+                 levels: dict[int, list[str]] = LEVELS) -> dict[int, pd.DataFrame]:
     """Per level, the decision for each cell that has a supported candidate (SPEC section 11).
 
     A cell is missing from the result when no candidate is supported; the caller backs off.
     """
     best = {}
     for level, table in tables.items():
-        cells = LEVELS[level]
+        cells = levels[level]
         supported = table[np.minimum(table["n_did"], table["n_did_not"]) >= cfg.min_count]
         status = (supported.assign(_win=supported["ci_low"] > 0)
                   .groupby(cells, as_index=False)["_win"].any())
@@ -110,7 +113,8 @@ def best_actions(tables: dict[int, pd.DataFrame], cfg: Config) -> dict[int, pd.D
     return best
 
 
-def resolve_points(points: pd.DataFrame, best: dict[int, pd.DataFrame]) -> pd.DataFrame:
+def resolve_points(points: pd.DataFrame, best: dict[int, pd.DataFrame],
+                   levels: dict[int, list[str]] = LEVELS) -> pd.DataFrame:
     """Status, action, level and estimate for every point, with back-off from level 0 to 2.
 
     no_clear_winner stops the back-off. A point with no level gets abstain.
@@ -123,7 +127,7 @@ def resolve_points(points: pd.DataFrame, best: dict[int, pd.DataFrame]) -> pd.Da
         result[col] = np.nan
     open_rows = pd.Series(True, index=points.index)
     for level in sorted(best):
-        cells = LEVELS[level]
+        cells = levels[level]
         todo = points.loc[open_rows, cells].rename_axis("_row").reset_index()
         found = todo.merge(best[level], on=cells, how="inner").set_index("_row")
         if found.empty:
@@ -135,3 +139,9 @@ def resolve_points(points: pd.DataFrame, best: dict[int, pd.DataFrame]) -> pd.Da
         open_rows.loc[found.index] = False
     result["action"] = result["action"].astype(object).where(result["action"].notna(), None)
     return result
+
+
+def read_tables(folder: Path, prefix: str) -> dict[int, pd.DataFrame]:
+    """Read tables written as <prefix>_level<L>.parquet, keyed by level."""
+    paths = sorted(folder.glob(f"{prefix}_level*.parquet"))
+    return {int(p.stem.removeprefix(f"{prefix}_level")): pd.read_parquet(p) for p in paths}

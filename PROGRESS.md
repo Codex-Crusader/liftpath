@@ -7,7 +7,7 @@
 | 1 | Data | done |
 | 2 | States | done |
 | 3 | Lift engine and synthetic data | done (Gate 2 test 2 fails) |
-| 4 | Recommend, recover, privacy | not started |
+| 4 | Recommend, recover, privacy | done |
 | 5 | Baselines, evaluation, fairness | not started |
 | 6 | App | not started |
 | 7 | Docs | not started |
@@ -60,6 +60,16 @@
   - Student ids are 1 to 1500 in 2013J and 1501 to 3000 in 2014J.
 - Phase 3: The quiz effect stays at 0.35. The allowed change to 0.5 did not pass the gate (quiz 0.057, forumng 0.067), so I did not keep it.
 - Phase 3: `make lifts` writes `lifts/<goal>_level<L>.parquet` and `lifts/best_<goal>_level<L>.parquet` to the scope directory. It uses train points only. Full data: 1,849, 736 and 128 lift rows at levels 0, 1 and 2. Test status shares for goal_pass: recommend 0.618, no_clear_winner 0.382, abstain 0.
+- Phase 4: Rationale text follows the SPEC section 12 template. Two wording choices: score_band "none" shows as "no scores yet", and effort_band "none" shows as "no activity this week". The template text "none scores" and "none effort" is not readable.
+- Phase 4: Goal words in the text: goal_pass is "a pass", goal_distinction is "a distinction", goal_recover is "a pass mark on the next assessment".
+- Phase 4: `best_actions` and `resolve_points` take an optional `levels` argument. Recovery uses `RECOVERY_LEVELS` = {0: (module, low_band), 1: (low_band)}.
+- Phase 4: `states.effort_bands` takes the group columns as an argument. Recovery effort bands use (course_id, assessment_id).
+- Phase 4: `recover.VERY_LOW_MAX = 20` comes from SPEC section 13. config.yaml has no key for it, and BUILD.md fixes the config content.
+- Phase 4: Recovery ordering uses non-Exam assessments with a due_day, ordered by due_day and then assessment_id. The window starts at due_day k, also when the student submitted k late. An item with no week_from and no clicks has no active day, so it is never old material.
+- Phase 4: SPEC section 13 has no rationale template for recovery. `explain_recovery` uses the section 12 style: "those who went back to earlier <label>". Level 1 adds "(compared across all courses)".
+- Phase 4: `suppress_counts` also hides a count of 0, because 0 is below display_min_count. It keeps an earlier `suppressed` flag when you call it again.
+- Phase 4: Full recovery points: 6,159 (3,892 train, 2,267 test), no repeated keys. Recovery rate (goal_recover): 0.497. Test status shares: recommend 0.862, no_clear_winner 0.138.
+- Phase 4: Two of the three demo cards recommend the discussion forum. This agrees with the Phase 3 method issue: tertile effort control can rate effort-driven actions too high.
 
 ## Blocked
 - None.

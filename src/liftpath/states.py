@@ -109,9 +109,11 @@ def decision_grid(con: duckdb.DuckDBPyConnection) -> pd.DataFrame:
     return grid
 
 
-def effort_bands(totals: pd.DataFrame) -> pd.Series:
-    """Band clicks > 0 by percentile rank within (course_id, week) (SPEC section 7)."""
-    pct = totals.groupby(["course_id", "week"])["clicks"].rank(method="average", pct=True)
+def effort_bands(totals: pd.DataFrame,
+                 by: tuple[str, ...] = ("course_id", "week")) -> pd.Series:
+    """Band clicks > 0 by percentile rank within each group, by default (course_id, week)
+    (SPEC section 7)."""
+    pct = totals.groupby(list(by))["clicks"].rank(method="average", pct=True)
     return pd.Series(np.select([pct <= TERTILES[0], pct <= TERTILES[1]], ["low", "mid"], "high"),
                      index=totals.index)
 

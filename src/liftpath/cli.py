@@ -14,6 +14,7 @@ from liftpath.config import Config, load_config
 from liftpath.db import connect
 from liftpath.lift import best_actions, lift_tables, resolve_points
 from liftpath.paths import RAW_DIR, REPORTS_DIR, canonical_dir, scope_dir
+from liftpath.recover import RECOVERY_LEVELS, build_recovery_points, recovery_tables
 from liftpath.scopes import build_sample
 from liftpath.states import (
     build_decision_points,
@@ -111,6 +112,27 @@ def step_lifts(cfg: Config) -> None:
         print(f"{goal}: lift rows per level {rows}, test status shares {shares.to_dict()}")
 
 
+def step_recover(cfg: Config) -> None:
+    con = connect(cfg)
+    register_canonical(con, canonical_dir(cfg))
+    folder = scope_dir(cfg)
+    candidates = json.loads((folder / "candidates.json").read_text(encoding="utf-8"))
+    points = build_recovery_points(con, cfg, candidates)
+    points.to_parquet(folder / "recovery_points.parquet", index=False)
+    print(f"recovery points: {points.shape}, by split: {points['split'].value_counts().to_dict()}")
+
+    out = folder / "recovery"
+    out.mkdir(exist_ok=True)
+    tables = recovery_tables(points[points["split"] == "train"], candidates, cfg)
+    best = best_actions(tables, cfg, RECOVERY_LEVELS)
+    for level in tables:
+        tables[level].to_parquet(out / f"goal_recover_level{level}.parquet", index=False)
+        best[level].to_parquet(out / f"best_goal_recover_level{level}.parquet", index=False)
+    test = points[points["split"] == "test"]
+    shares = resolve_points(test, best, RECOVERY_LEVELS)["status"].value_counts(normalize=True)
+    print(f"goal_recover: test status shares {shares.round(3).to_dict()}")
+
+
 def not_built(cfg: Config) -> None:
     print("not built yet")
 
@@ -122,6 +144,7 @@ HANDLERS = {
     "synthetic": step_synthetic,
     "states": step_states,
     "lifts": step_lifts,
+    "recover": step_recover,
 }
 
 
