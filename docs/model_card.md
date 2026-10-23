@@ -11,7 +11,7 @@ Developer: Bhargavaram Krishnapur, PulseEngine. Version: 0.1.0 (DataNova 2026 da
 - Decision support for students, tutors and course teams: a suggested next activity, a 4-week route and a "go back" card after a low score, each with its evidence.
 - A teacher can open the "Why?" table and audit each number by hand.
 - The teacher view sorts a class by facts from the course log only: a low mark on the last assessment, then weeks without clicks. It does not use a prediction of the final result.
-- LiftPath supports decisions. It does not make them. It does not grade, rank or flag students.
+- LiftPath supports decisions. It does not make them. It does not predict, grade or score students.
 
 Uses that are out of scope:
 

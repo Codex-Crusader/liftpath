@@ -90,7 +90,7 @@ CSS = f"""
   padding:10px 16px; color:{TEXT}; margin-bottom:8px;}}
 .lp-plan {{width:100%; border-collapse:collapse; font-size:0.92rem;}}
 .lp-plan td {{padding:6px 4px; border-top:1px solid {BORDER}; color:{TEXT};}}
-.lp-plan td.w {{color:{TEXT_SECONDARY}; width:84px;}}
+.lp-plan td.w {{color:{TEXT_SECONDARY}; width:140px;}}
 [data-testid="stCode"] pre, [data-testid="stCode"] code {{font-size:0.98rem;
   font-family:"Source Sans", "Source Sans Pro", sans-serif !important;}}
 </style>
@@ -193,11 +193,18 @@ def suggestion_steps(row: pd.Series, goal: str, prefs: Prefs) -> str:
 
 
 def plan_html(route, prefs: Prefs) -> str:
-    rows = []
-    for step in route.steps:
-        what = (f"The {activity_name(step.action, prefs)}" if step.status == RECOMMEND
-                else "Keep the current plan")
-        rows.append(f'<tr><td class="w">Week {step.week}</td><td>{esc(what)}</td></tr>')
+    """One row per run of equal steps. A step decided at week w is for week w + 1."""
+    steps = pd.DataFrame({
+        "week": [s.week + 1 for s in route.steps],
+        "what": [f"The {activity_name(s.action, prefs)}" if s.status == RECOMMEND
+                 else "Keep the current plan" for s in route.steps]})
+    run = steps["what"].ne(steps["what"].shift()).cumsum()
+    runs = steps.groupby(run).agg(first=("week", "min"), last=("week", "max"),
+                                  what=("what", "first"))
+    weeks = np.where(runs["first"] == runs["last"], "Week " + runs["first"].astype(str),
+                     "Weeks " + runs["first"].astype(str) + " to " + runs["last"].astype(str))
+    rows = [f'<tr><td class="w">{esc(w)}</td><td>{esc(t)}</td></tr>'
+            for w, t in zip(weeks, runs["what"], strict=True)]
     return f'<table class="lp-plan">{"".join(rows)}</table>'
 
 
@@ -237,8 +244,8 @@ def pick_from_list(shown: pd.DataFrame) -> None:
         hide_index=True, width="stretch", height=LIST_HEIGHT, on_select="rerun",
         selection_mode="single-row", key="teacher_list",
         column_config={"Student": st.column_config.TextColumn(width="small"),
-                       "Status": st.column_config.TextColumn(width="medium"),
-                       "LiftPath suggests": st.column_config.TextColumn(width="large"),
+                       "Status": st.column_config.TextColumn(width="small"),
+                       "LiftPath suggests": st.column_config.TextColumn(width="medium"),
                        "Similar students mostly did": st.column_config.TextColumn(
                            width="medium")})
     rows = list(event.selection.rows) if event and event.selection else []
@@ -295,10 +302,12 @@ def detail_panel(ctx: TeacherContext, table: pd.DataFrame, shown: pd.DataFrame, 
             elif route.steps:
                 st.markdown(plan_html(route, prefs), unsafe_allow_html=True)
                 if not np.isnan(route.projected_route):
-                    st.caption(f"Projected chance of {GOAL_TEXT[goal]}: "
-                               f"{route.projected_route:.0%} with this plan, "
-                               f"{route.projected_typical:.0%} on the typical path. "
-                               f"{PROJECTION_NOTE}")
+                    plan, typical = (f"{route.projected_route:.0%}",
+                                     f"{route.projected_typical:.0%}")
+                    compare = ("about the same as on the typical path" if plan == typical
+                               else f"against {typical} on the typical path")
+                    st.caption(f"Projected chance of {GOAL_TEXT[goal]} with this plan: {plan}, "
+                               f"{compare}. {PROJECTION_NOTE}")
         st.markdown("##### Message for the student")
         st.code(row["message"], language=None, wrap_lines=True)
         st.caption("Copy it with the icon at the top right of the box. Change the text in "
