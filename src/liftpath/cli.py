@@ -6,9 +6,13 @@ import runpy
 from dataclasses import replace
 from pathlib import Path
 
+import pandas as pd
+
 from liftpath.adapters.oulad import build_canonical
+from liftpath.adapters.synthetic import write_synthetic
 from liftpath.config import Config, load_config
 from liftpath.db import connect
+from liftpath.lift import best_actions, lift_tables, resolve_points
 from liftpath.paths import RAW_DIR, REPORTS_DIR, canonical_dir, scope_dir
 from liftpath.scopes import build_sample
 from liftpath.states import (
@@ -22,6 +26,7 @@ from liftpath.states import (
 )
 
 SCRIPTS_DIR = Path("scripts")
+GOALS = ("goal_pass", "goal_distinction")
 
 STEPS = (
     "data",
@@ -82,6 +87,30 @@ def step_states(cfg: Config) -> None:
     print(f"{report.as_posix()}: Gate 1 {'PASS' if gate1_passes(variety, cfg) else 'FAIL'}")
 
 
+def step_synthetic(cfg: Config) -> None:
+    syn = replace(cfg, scope="synthetic")
+    for table, rows in write_synthetic(syn, canonical_dir(syn)).items():
+        print(f"{table}: {rows:,}")
+
+
+def step_lifts(cfg: Config) -> None:
+    folder = scope_dir(cfg)
+    points = pd.read_parquet(folder / "decision_points.parquet")
+    candidates = json.loads((folder / "candidates.json").read_text(encoding="utf-8"))
+    train, test = points[points["split"] == "train"], points[points["split"] == "test"]
+    out = folder / "lifts"
+    out.mkdir(exist_ok=True)
+    for goal in GOALS:
+        tables = lift_tables(train, candidates, goal, cfg)
+        best = best_actions(tables, cfg)
+        for level in tables:
+            tables[level].to_parquet(out / f"{goal}_level{level}.parquet", index=False)
+            best[level].to_parquet(out / f"best_{goal}_level{level}.parquet", index=False)
+        rows = {level: len(table) for level, table in tables.items()}
+        shares = resolve_points(test, best)["status"].value_counts(normalize=True).round(3)
+        print(f"{goal}: lift rows per level {rows}, test status shares {shares.to_dict()}")
+
+
 def not_built(cfg: Config) -> None:
     print("not built yet")
 
@@ -90,7 +119,9 @@ HANDLERS = {
     "data": step_data,
     "sample": step_sample,
     "profile": step_profile,
+    "synthetic": step_synthetic,
     "states": step_states,
+    "lifts": step_lifts,
 }
 
 
