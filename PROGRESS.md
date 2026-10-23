@@ -5,7 +5,7 @@
 |---|---|---|
 | 0 | Setup | done |
 | 1 | Data | done |
-| 2 | States | not started |
+| 2 | States | done |
 | 3 | Lift engine and synthetic data | not started |
 | 4 | Recommend, recover, privacy | not started |
 | 5 | Baselines, evaluation, fairness | not started |
@@ -14,7 +14,7 @@
 | 8 | Planner (optional) | not started |
 
 ## Gate results
-- Gate 1 (variety): not run.
+- Gate 1 (variety): PASS on full data. 8 of 8 candidates have share >= 0.30. The lowest are glossary (0.432) and ouwiki (0.440). The sample scope has 6 of 8. Report: `reports/gate1_variety.md`.
 - Gate 2 (synthetic truth): not run.
 - Gate 3 (coverage): not run.
 
@@ -35,6 +35,16 @@
 - Phase 1: The adapter fails if a join changes a row count, if a student key repeats, or if final_result or assessment_type has a value that SPEC section 2 does not list. Casts use CAST, not TRY_CAST.
 - Phase 1: Sample modules are AAA (748 enrollments, 2 presentations) and GGG (2,534 enrollments, 3 presentations). The sample also requires 2 or more presentations per module, so that a test split exists. This rule did not change the result.
 - Phase 1: 45 enrollments have no reg_day. Every event row matches an item.
+- Phase 2: Effort percentile ties use the average rank (`rank(method="average", pct=True)`). SPEC section 7 does not define ties. With the min or max rank, small click counts would move between the low and mid bands.
+- Phase 2: The effort rank population is all students with clicks > 0 in that (course_id, week), before the registration filter.
+- Phase 2: score_band counts banked submissions. known_day uses due_day if submit_day is NULL, and submit_day if due_day is NULL. A score known before day 0 counts from week 0.
+- Phase 2: Cumulative scores and click shares use all weeks before the registration filter. A late registrant keeps the clicks and scores from before registration.
+- Phase 2: The Gate 1 share uses all train points as the denominator. The numerator is the train points in level 0 cells where n_did >= min_count and n_did_not >= min_count. n_did and n_did_not use the SPEC section 10 band rules: next_effort_band "none" is excluded, and a band counts only if n1 >= 1 and n0 >= 1. `check_variety` has its own copy of these rules. The Phase 3 `estimate_lifts` must give the same counts.
+- Phase 2: `reports/gate1_variety.md` is for the full scope. Other scopes write `reports/gate1_variety_<scope>.md`, so a sample run does not overwrite the gate report.
+- Phase 2: No module has only one presentation. The test presentations are the seven `*_2014J` courses.
+- Phase 2: Full candidates: oucontent, forumng, quiz, subpage, resource, ouwiki, url, glossary. The sample has dataplus in place of ouwiki.
+- Phase 2: Full decision points: 898,212 (587,671 train, 310,541 test). `make states` takes 9 s on full data.
+- Phase 2: `LEVELS` is in `lift.py` now. Phase 3 adds the estimator to the same file.
 
 ## Blocked
 - None.
