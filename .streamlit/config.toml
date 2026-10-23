@@ -1,6 +1,16 @@
-# The chart palette in src/liftpath/style.py is for light mode only (BUILD2 Phase F).
+# Dark theme for the app. The tokens are in src/liftpath/style.py (DARK_*). Slide figures stay light.
 [theme]
-base = "light"
-backgroundColor = "#fcfcfb"
-textColor = "#0b0b0b"
-primaryColor = "#2a78d6"
+base = "dark"
+backgroundColor = "#0f1724"
+secondaryBackgroundColor = "#172133"
+textColor = "#e6e9ef"
+primaryColor = "#3987e5"
+borderColor = "#2a3750"
+baseRadius = "0.6rem"
+showWidgetBorder = true
+
+[client]
+toolbarMode = "minimal"
+
+[server]
+enableStaticServing = true

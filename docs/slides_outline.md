@@ -74,10 +74,12 @@ Figure: `reports/slides/fairness.png`
 
 Notes: The follower lift is positive in every group of 200 or more students, except an unknown deprivation band: -0.9 points, range -3.2 to +1.7. The data is observational, from one university in 2013 and 2014. Lift is evidence, not proof of cause. Counts below 5 never leave the build.
 
-## Slide 10: Impact and next steps
+## Slide 10: Impact: the teacher view and next steps
 
-Message: LiftPath turns the course log that every university already has into advice with its evidence attached.
+Message: A teacher opens one page and gets a next step for each student, in plain words, with the evidence one click away.
 
-Figure: `reports/slides/route_example.png`
+Figure: `reports/slides/teacher_view.png`
 
-Notes: The engine CLI gives strict JSON for a learning platform. Demo mode logs advice, so a course can run the explore loop and get an experiment. Next steps: a pilot with one course team, the real course calendar for items, and a test of the explore bias before any claim about the loop.
+Source: a screenshot of the running app, not an output of `make figures`.
+
+Notes: In FFF, week 19, LiftPath and "similar students" advice differ for 100 of 104 students with a suggestion. The list is sorted by facts from the log, not by a prediction. Each student gets a reason and a message. Next steps: a pilot with one course team and a login for teacher settings.

@@ -17,6 +17,7 @@ from liftpath.app_charts import (
     sim_estimates_chart,
     sim_pass_rate_chart,
 )
+from liftpath.app_shell import global_styles, splash, top_bar
 from liftpath.config import load_config
 from liftpath.engine import app_plan
 from liftpath.fairness import SMALL_SAMPLE_STUDENTS
@@ -40,7 +41,7 @@ from liftpath.recommend import State, label, situation
 from liftpath.rescue import SOLID, build_graph, keystone, rescue_figure, rescue_note
 from liftpath.route import ITEM_NOTE, KEEP_LABEL, PROJECTION_NOTE, plan_route, rescue_card
 from liftpath.sim import POLICIES
-from liftpath.style import BLUE, GRID, MUTED
+from liftpath.style import BLUE, GRID, MUTED, dark_figure
 from liftpath.teacher import prefs_path
 from liftpath.teacher_ui import TeacherContext, settings_tab, teacher_tab
 from liftpath.trap import trap_lines
@@ -160,9 +161,9 @@ def candidate_rows(goal: str, state: State, level: int) -> pd.DataFrame:
     return table[mask]
 
 
-def header() -> None:
-    st.title("LiftPath")
-    st.caption(PITCH)
+def chart(container, fig, **kwargs) -> None:
+    """Every app chart goes through here, so it uses the dark theme."""
+    container.plotly_chart(dark_figure(fig), theme=None, **kwargs)
 
 
 def headline_metrics() -> None:
@@ -224,7 +225,7 @@ def why_section(goal: str, row: pd.Series, state: State, action, level: int, cfg
     if rows_at_level.empty:
         st.info("No comparison data exists for this situation.")
         return
-    st.plotly_chart(lift_chart(rows_at_level, action,
+    chart(st, lift_chart(rows_at_level, action,
                                f"Lift per activity this week, back-off level {level} "
                                "(95% range)"), width="stretch", key="why_chart")
     rows_at_level = rows_at_level.sort_values("lift", ascending=False)
@@ -316,7 +317,7 @@ def route_tab(cfg) -> None:
                f"{PROJECTION_NOTE[1:]}")
 
     if not np.isnan(route.projected_route):
-        st.plotly_chart(projection_chart(route, GOAL_NAMES[goal].lower()), width="stretch",
+        chart(st, projection_chart(route, GOAL_NAMES[goal].lower()), width="stretch",
                         key="route_projection")
         gap = 100 * (route.projected_route - route.projected_typical)
         st.caption(f"Route minus typical path: {gap:+.2f} pp. {PROJECTION_NOTE}")
@@ -354,7 +355,7 @@ def simulator_tab() -> None:
     upto = (c3.slider("Show cohorts up to", 1, last, last, key="sim_cohort") if last > 1
             else last)
     in_world = results[results["world"] == world]
-    st.plotly_chart(sim_pass_rate_chart(in_world, policies or ["liftpath"], upto, world),
+    chart(st, sim_pass_rate_chart(in_world, policies or ["liftpath"], upto, world),
                     width="stretch", key="sim_pass_chart")
     final = in_world[in_world["cohort"] == last].set_index("policy")["pass_rate"]
     table = pd.DataFrame({"policy": [POLICY_NAMES[p] for p in POLICIES],
@@ -370,8 +371,8 @@ def simulator_tab() -> None:
     st.subheader("How the estimates converge")
     c1, c2 = st.columns(2)
     in_world = estimates[estimates["world"] == world]
-    c1.plotly_chart(sim_estimates_chart(in_world, "quiz"), width="stretch", key="sim_est_quiz")
-    c2.plotly_chart(sim_estimates_chart(in_world, "resource"), width="stretch",
+    chart(c1, sim_estimates_chart(in_world, "quiz"), width="stretch", key="sim_est_quiz")
+    chart(c2, sim_estimates_chart(in_world, "resource"), width="stretch",
                     key="sim_est_resource")
     st.caption("Lines: 95% range. The experimental estimate comes from the explored "
                "recommendations. It sits above the true effect, because the explore design "
@@ -477,7 +478,7 @@ def rescue_tab(meta: dict, cfg) -> None:
     module = st.selectbox("Module", modules, index=first, key="rescue_module")
     fig = rescue_figure(edges, module, rescue_note(info))
     fig.update_layout(width=None)
-    st.plotly_chart(fig, width="stretch", key="rescue_chart")
+    chart(st, fig, width="stretch", key="rescue_chart")
     none = sorted(set(meta.get("modules", [])) - set(modules))
     if none:
         st.caption(f"No supported edge: {', '.join(none)}.")
@@ -524,7 +525,7 @@ def eval_section(cfg) -> None:
         low, high = ("ci_low", "ci_high") if metric == "lift" else ("net_ci_low", "net_ci_high")
         rows = pd.DataFrame({"action": table["name"], "lift": table[metric],
                              "ci_low": table[low], "ci_high": table[high]})
-        st.plotly_chart(lift_chart(rows, "liftpath", f"{title}, goal: {GOAL_NAMES[goal]} "
+        chart(st, lift_chart(rows, "liftpath", f"{title}, goal: {GOAL_NAMES[goal]} "
                                    "(95% range)", names=str), width="stretch",
                         key=f"evidence_{metric}")
     if "disagreement" in data:
@@ -571,7 +572,7 @@ def fairness_section(cfg) -> None:
                       title="Follower lift by group (95% range)",
                       margin={"l": 10, "r": 10, "t": 50, "b": 30})
     fig.update_xaxes(gridcolor=GRID, showgrid=True, zeroline=True, zerolinecolor=MUTED)
-    st.plotly_chart(fig, width="stretch", key="evidence_fairness")
+    chart(st, fig, width="stretch", key="evidence_fairness")
     st.dataframe(pd.DataFrame({
         "attribute": report["attribute"], "group": report["group"],
         "students": [count_text(v, cfg) for v in report["n_students"]],
@@ -610,15 +611,25 @@ def teacher_context(meta: dict, cfg) -> TeacherContext:
 
 
 def main() -> None:
-    st.set_page_config(page_title="LiftPath", layout="wide")
+    st.set_page_config(page_title="LiftPath", page_icon=str(ROOT / "app" / "assets" /
+                                                            "favicon.png"), layout="wide")
+    global_styles()
+    loading = None if st.session_state.get("loaded") else splash("Loading the course data...")
     meta = load_json(APP_DIR, "meta.json")
     if meta is None:
+        if loading is not None:
+            loading.empty()
         st.title("LiftPath")
         st.error(f"No app data in {APP_DIR}. Run `make app-data`.")
         return
     cfg = app_config(meta)
-    header()
     teacher = teacher_context(meta, cfg)
+    for goal in GOAL_NAMES:  # fill the caches while the loading screen shows
+        lift_tables(goal)
+    if loading is not None:
+        loading.empty()
+        st.session_state["loaded"] = True
+    top_bar(PITCH, f"Open University data, {meta['scope']} scope")
     tabs = st.tabs(TABS)
     with tabs[0]:
         teacher_tab(teacher)

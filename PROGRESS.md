@@ -213,6 +213,12 @@
 - Docs: `docs/teacher_guide.md`, `docs/admin_guide.md` (canonical schema, adapter, config.yaml, make all, deploy data/app). The demo script opens on the teacher view. `test_demo_script_clicks` checks the teacher view numbers. `scripts/demo_trap.py` finds the route tab by label.
 - Not checked: the layout at phone width. The browser window was maximized and did not resize.
 
+- App design (user request): dark theme in `.streamlit/config.toml` (base dark, background #0f1724, cards #172133). Deviation from Phase F, which forced the light theme. The slide figures from `make figures` stay light.
+- Dark charts: every app chart goes through `chart()` in the app, which calls `style.dark_figure`. It swaps each light palette color for the dark step of the same hue from the dataviz reference palette (blue #3987e5, orange #d95926, aqua #199e70, yellow #c98500, magenta #d55181, green #008300, violet #9085e9). The validator passed all checks in dark mode on #172133 and on #0f1724. Each method keeps one hue in all charts. The light figure code did not change.
+- App frame in `src/liftpath/app_shell.py`: a top bar with the logo (app/static/logo_white.png, served with server.enableStaticServing), a pill tab bar that stays at the top (Streamlit 1.66 markup: role="tablist", role="tab"), a full-window loading screen on the first run of a session, and fade-in of tab panels. The teacher view shows spinners while it builds the class list and the route. The favicon and the README logo are in app/assets.
+- Teacher view status colors have dark steps (4.5:1 or more on the card color) and always show with a text label.
+- Slide 10 now shows `reports/slides/teacher_view.png`, a screenshot of the app (FFF, week 19), joined from two captures. It is not an output of `make figures`.
+
 ## Blocked
 - None.
 

@@ -199,6 +199,9 @@ def test_committed_app_data(monkeypatch, tmp_path):
     assert not at.exception
     for name in TABS:
         tab(at, name)
+    # The loading screen is gone after the run.
+    assert not any('<div class="lp-splash">' in m.value for m in at.markdown)
+    assert any('class="lp-top"' in m.value for m in at.markdown)
     start = time.time()
     at.run()
     assert not at.exception

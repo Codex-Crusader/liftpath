@@ -15,11 +15,13 @@ from liftpath.recommend import GOAL_TEXT, State, label, recommend
 from liftpath.route import PROJECTION_NOTE, plan_route, rescue_card
 from liftpath.style import (
     BORDER,
+    DARK_BG,
+    DARK_SURFACE,
+    DARK_SURFACE_2,
+    DARK_TEXT,
+    DARK_TEXT_SECONDARY,
     STATUS_COLORS,
     STATUS_TINTS,
-    SURFACE,
-    TEXT,
-    TEXT_SECONDARY,
 )
 from liftpath.teacher import (
     ADMIN_SETTINGS,
@@ -59,38 +61,38 @@ CSS = f"""
 <style>
 .lp-tiles {{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
   gap:12px; margin:4px 0 8px 0;}}
-.lp-tile {{background:#fff; border:1px solid {BORDER}; border-left:6px solid var(--c);
+.lp-tile {{background:{DARK_SURFACE}; border:1px solid {BORDER}; border-left:6px solid var(--c);
   border-radius:12px; padding:12px 16px;}}
-.lp-tile .n {{font-size:2rem; font-weight:700; line-height:1.15; color:{TEXT};}}
+.lp-tile .n {{font-size:2rem; font-weight:700; line-height:1.15; color:{DARK_TEXT};}}
 .lp-tile .t {{font-weight:600; color:var(--c);}}
-.lp-tile .d {{font-size:0.85rem; color:{TEXT_SECONDARY}; margin-top:2px;}}
+.lp-tile .d {{font-size:0.85rem; color:{DARK_TEXT_SECONDARY}; margin-top:2px;}}
 .lp-badge {{display:inline-block; padding:2px 12px; border-radius:999px; font-weight:600;
   font-size:0.85rem; color:var(--c); background:var(--bg); border:1px solid var(--c);}}
 .lp-chip {{display:inline-block; padding:3px 11px; border-radius:999px; font-size:0.85rem;
-  margin:0 6px 6px 0; background:{SURFACE}; border:1px solid {BORDER}; color:{TEXT};}}
-.lp-name {{font-size:1.35rem; font-weight:700; color:{TEXT}; margin-right:10px;}}
+  margin:0 6px 6px 0; background:{DARK_SURFACE_2}; border:1px solid {BORDER}; color:{DARK_TEXT};}}
+.lp-name {{font-size:1.35rem; font-weight:700; color:{DARK_TEXT}; margin-right:10px;}}
 .lp-steps {{margin:6px 0 4px 0;}}
 .lp-step {{display:flex; gap:12px; align-items:flex-start; padding:10px 0;
   border-top:1px solid {BORDER};}}
 .lp-step:first-child {{border-top:none;}}
-.lp-num {{flex:0 0 28px; height:28px; border-radius:50%; background:var(--c); color:#fff;
+.lp-num {{flex:0 0 28px; height:28px; border-radius:50%; background:var(--c); color:{DARK_BG};
   text-align:center; line-height:28px; font-weight:700; font-size:0.9rem;}}
-.lp-step .h {{font-weight:600; color:{TEXT};}}
-.lp-step .s {{font-size:0.9rem; color:{TEXT_SECONDARY};}}
-.lp-hero {{background:#fff; border:1px solid {BORDER}; border-radius:14px;
+.lp-step .h {{font-weight:600; color:{DARK_TEXT};}}
+.lp-step .s {{font-size:0.9rem; color:{DARK_TEXT_SECONDARY};}}
+.lp-hero {{background:{DARK_SURFACE}; border:1px solid {BORDER}; border-radius:14px;
   padding:18px 22px; margin:6px 0 14px 0; display:flex; gap:22px; align-items:center;
   flex-wrap:wrap;}}
 .lp-hero .big {{font-size:2.6rem; font-weight:800; line-height:1; white-space:nowrap;
   color:{STATUS_COLORS["next_step"]};}}
-.lp-hero .big span {{font-size:1.1rem; font-weight:600; color:{TEXT_SECONDARY};}}
-.lp-hero .txt {{flex:1 1 320px; color:{TEXT}; font-size:1.02rem;}}
+.lp-hero .big span {{font-size:1.1rem; font-weight:600; color:{DARK_TEXT_SECONDARY};}}
+.lp-hero .txt {{flex:1 1 320px; color:{DARK_TEXT}; font-size:1.02rem;}}
 .lp-hero .txt b {{font-weight:700;}}
-.lp-hero .sub {{color:{TEXT_SECONDARY}; font-size:0.88rem; margin-top:4px;}}
-.lp-insight {{background:#fff; border:1px solid {BORDER}; border-radius:12px;
-  padding:10px 16px; color:{TEXT}; margin-bottom:8px;}}
+.lp-hero .sub {{color:{DARK_TEXT_SECONDARY}; font-size:0.88rem; margin-top:4px;}}
+.lp-insight {{background:{DARK_SURFACE}; border:1px solid {BORDER}; border-radius:12px;
+  padding:10px 16px; color:{DARK_TEXT}; margin-bottom:8px;}}
 .lp-plan {{width:100%; border-collapse:collapse; font-size:0.92rem;}}
-.lp-plan td {{padding:6px 4px; border-top:1px solid {BORDER}; color:{TEXT};}}
-.lp-plan td.w {{color:{TEXT_SECONDARY}; width:140px;}}
+.lp-plan td {{padding:6px 4px; border-top:1px solid {BORDER}; color:{DARK_TEXT};}}
+.lp-plan td.w {{color:{DARK_TEXT_SECONDARY}; width:140px;}}
 [data-testid="stCode"] pre, [data-testid="stCode"] code {{font-size:0.98rem;
   font-family:"Source Sans", "Source Sans Pro", sans-serif !important;}}
 </style>
@@ -293,7 +295,9 @@ def detail_panel(ctx: TeacherContext, table: pd.DataFrame, shown: pd.DataFrame, 
         st.markdown(suggestion_steps(row, goal, prefs), unsafe_allow_html=True)
         if ctx.plan is not None:
             projector, schedule = ctx.plan
-            route = plan_route(row, goal, ctx.tables_for(goal), projector, schedule, ctx.cfg)
+            with st.spinner("Planning the next weeks..."):
+                route = plan_route(row, goal, ctx.tables_for(goal), projector, schedule,
+                                   ctx.cfg)
             planned = [s for s in route.steps if s.status == RECOMMEND]
             if route.steps:
                 st.markdown(f"##### Plan for the next {len(route.steps)} weeks")
@@ -321,8 +325,9 @@ def teacher_tab(ctx: TeacherContext) -> None:
     for note in notes:
         st.warning(note)
     course, week, goal = context_bar(ctx, prefs)
-    table = class_table(ctx.students, ctx.recovery, ctx.tables_for(goal), course, week, goal,
-                        ctx.cfg, prefs)
+    with st.spinner("Finding the next step for each student..."):
+        table = class_table(ctx.students, ctx.recovery, ctx.tables_for(goal), course, week,
+                            goal, ctx.cfg, prefs)
     summary = class_summary(table)
     st.markdown(hero(summary), unsafe_allow_html=True)
     st.markdown(tiles(summary, prefs), unsafe_allow_html=True)

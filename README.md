@@ -1,3 +1,5 @@
+<p align="center"><img src="app/assets/logo.png" width="140" alt="LiftPath logo"></p>
+
 # LiftPath
 
 Not what students like you did. What helped students like you.
@@ -16,6 +18,7 @@ The numbers come from `make headline` (`reports/headline.md`). The 76% is the sh
 ## Features
 
 - Teacher view: the first tab. A class list with one next step per student in plain words, the reason, a 4-week plan and a message to copy. A card shows for how many students LiftPath differs from "do what similar students did". The numbers stay behind "Show the evidence". Guide: `docs/teacher_guide.md`.
+- Dark theme with the LiftPath logo, a tab bar that stays at the top, and a loading screen on first open. Slide figures stay light.
 - Settings: teacher preferences (course, goal, activity names, message text, the weeks without clicks before "No recent activity"), and the course rules and fixed rules from `config.yaml`, read only. Setup for your own data: `docs/admin_guide.md`.
 - Your route: a plan for the next 4 weeks, with a lift and a 95% range for each step, a projected chance of the goal, and the typical path for comparison.
 - Rescue card: after a low score, the earlier material that helped similar students pass the next assessment.
