@@ -1,0 +1,39 @@
+[project]
+name = "liftpath"
+version = "0.1.0"
+description = "Learning path recommender that ranks next study activities by measured lift."
+license = "MIT"
+authors = [{ name = "Bhargavaram Krishnapur" }]
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "duckdb",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "plotly",
+    "pyarrow",
+    "pyyaml",
+    "scikit-learn",
+    "scipy",
+    "streamlit",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[build-system]
+requires = ["uv_build>=0.10,<0.11"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
