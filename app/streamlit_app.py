@@ -14,12 +14,12 @@ from liftpath.fairness import SMALL_SAMPLE_STUDENTS
 from liftpath.lift import ABSTAIN, LEVELS, NO_CLEAR_WINNER, RECOMMEND
 from liftpath.recommend import State, label, recommend, show_count, situation
 from liftpath.recover import explain_recovery
+from liftpath.style import BLUE, GRID, MUTED
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_DIR = os.environ.get("APP_DATA_DIR", str(ROOT / "data" / "app"))
 GOAL_NAMES = {"goal_pass": "Pass", "goal_distinction": "Distinction"}
 COUNT_COLS = ["n_did", "n_did_not"]
-BLUE, MUTED, GRID = "#2a78d6", "#898781", "#e1e0d9"
 HOLLOW = "rgba(0,0,0,0)"
 EFFORT_ORDER = {"low": 0, "mid": 1, "high": 2}
 PITCH = "Not what students like you did. What helped students like you."

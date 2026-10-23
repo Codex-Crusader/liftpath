@@ -3,6 +3,7 @@
 import argparse
 import json
 import runpy
+import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -13,12 +14,22 @@ from liftpath.adapters.synthetic import write_synthetic
 from liftpath.app_data import FIGURES, build_app_data
 from liftpath.config import Config, load_config
 from liftpath.db import connect
+from liftpath.figures import sim_estimates_figure, sim_pass_rate_figure
 from liftpath.lift import best_actions, lift_tables, resolve_points
-from liftpath.paths import APP_DIR, RAW_DIR, REPORTS_DIR, TMP_DIR, canonical_dir, scope_dir
+from liftpath.paths import (
+    APP_DIR,
+    PROCESSED_DIR,
+    RAW_DIR,
+    REPORTS_DIR,
+    TMP_DIR,
+    canonical_dir,
+    scope_dir,
+)
 from liftpath.recover import RECOVERY_LEVELS, build_recovery_points, recovery_tables
 from liftpath.report import run_eval
 from liftpath.route import item_schedule, score_transitions
 from liftpath.scopes import build_sample
+from liftpath.sim import expected_results, run_world
 from liftpath.states import (
     build_decision_points,
     check_variety,
@@ -43,6 +54,7 @@ STEPS = (
     "eval",
     "app-data",
     "plan",
+    "sim",
 )
 
 
@@ -188,6 +200,36 @@ def step_plan(cfg: Config) -> None:
     print(f"transitions: {transitions.shape}, schedule: {schedule.shape}")
 
 
+def step_sim(cfg: Config) -> None:
+    start = time.time()
+    out = PROCESSED_DIR / "synthetic" / "sim"
+    out.mkdir(parents=True, exist_ok=True)
+    results, estimates = [], []
+    for world in cfg.sim_worlds:
+        res, est = run_world(world, cfg, cfg.sim_students_per_cohort, cfg.sim_cohorts)
+        results.append(res)
+        estimates.append(est)
+        print(f"{world}: done after {time.time() - start:.0f} s")
+    results = pd.concat(results, ignore_index=True)
+    estimates = pd.concat(estimates, ignore_index=True)
+    results.to_parquet(out / "results.parquet", index=False)
+    estimates.to_parquet(out / "estimates.parquet", index=False)
+    figures = REPORTS_DIR / "figures"
+    for world, name, title in (("standard", "standard", "standard world"),
+                               ("hidden_confounder", "hidden", "hidden confounder world")):
+        sim_pass_rate_figure(results[results["world"] == world], title,
+                             figures / f"sim_pass_rate_{name}.png")
+    sim_estimates_figure(estimates[estimates["world"] == "hidden_confounder"],
+                         figures / "sim_estimates_hidden.png")
+    last = results["cohort"].max()
+    final = results[results["cohort"] == last].pivot(index="policy", columns="world",
+                                                       values="pass_rate")
+    print(f"final cohort pass rate:\n{final.round(3).to_string()}")
+    for key, value in expected_results(results).items():
+        print(f"{key}: {round(value, 3) if isinstance(value, float) else value}")
+    print(f"sim runtime: {time.time() - start:.0f} s")
+
+
 def not_built(cfg: Config) -> None:
     print("not built yet")
 
@@ -203,6 +245,7 @@ HANDLERS = {
     "eval": step_eval,
     "app-data": step_app_data,
     "plan": step_plan,
+    "sim": step_sim,
 }
 
 

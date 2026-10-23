@@ -13,7 +13,7 @@
 | 7 | Docs | replaced by BUILD2 |
 | 8 | Planner (optional) | replaced by BUILD2 |
 | A | Route | done |
-| B | Simulator and learning loop | not started |
+| B | Simulator and learning loop | done |
 | C | Trap comparison | not started |
 | D | Live mode and engine CLI | not started |
 | E | Rescue map | not started |
@@ -127,9 +127,30 @@
 - Phase A fix (user decision): A route carries the share of every score band, not only the most likely band. Each step recommends for the most likely band. `propagate` mixes the projection of each band by its share. The projected rate is the share-weighted goal rate. On 300 seeded full test points, route and typical now differ in 49.7% of routes (pass) and 43.7% (distinction). The mean gap is +0.13 pp (pass) and +0.07 pp (distinction). The mean absolute gap is 0.24 pp and 0.13 pp. One route now takes 0.23 s. Stop reasons (pass): horizon 261, course end 35, no projection 4.
 - Phase 4 wording (user decision): The SPEC section 12 card now says "Based on {n_did} and {n_did_not} student-weeks." SPEC.md, `recommend.explain` and the tests use it. The recovery card (not in SPEC) says "low-score cases", because its counts are (student, assessment) pairs.
 
+- Phase B: `src/liftpath/sim.py` runs the SPEC 16 world week by week with the constants of `SyntheticParams`. `SyntheticParams` is already a module-level dataclass, so `adapters/synthetic.py` did not change.
+- Phase B: The hidden confounder world replaces the resource rule: resource engages with probability sigmoid(-1.0 + 1.5 * u) when c > 0, with no log1p(c) term. So resource use does not depend on effort.
+- Phase B: rec_action and explored sit on the decision row of week w. That row's act_<a> columns describe week w + 1, the week the advice is for. (BUILD2 says "for week w + 1". The advice applies to week w + 1, and the row of week w holds it.)
+- Phase B: Two random streams. The world stream (seed, world, cohort) draws u, clicks, engagement, compliance, withdrawals, TMA noise and outcome coins before the loop. The policy stream (seed, world, cohort, policy) draws the explore coin, the explore choice and the random policy's picks (a new seed per week, because `make_random` reseeds on every call).
+- Phase B: A followed recommendation sets engage[r] = 1 in week w + 1 and sets c to at least 1. It applies only to active (not withdrawn) students. Effort uses the sum of the per-type clicks, as the generator events do.
+- Phase B: The simulator candidates are the top n_candidates types by natural clicks in a standard cohort 0 (dev size), without exclude_types. Courses are SYN_SIM<k>. Student ids are cohort * 1,000,000 + i.
+- Phase B: Sanity check, cohort 0 with no policy at 1,500 students against the synthetic scope (2013J): pass 48.9% against 46.3% (2014J 46.9%). act_quiz 0.397 against 0.395, act_forumng 0.301 against 0.302, act_resource 0.360 against 0.368. Effort and score band shares match within 0.004. Withdrawal share 10.2% against 10.2%.
+- Phase B: True effect line: the cohort mean of sigmoid(logit + 0.35) - sigmoid(logit). Withdrawn students count as 0, because they cannot reach the goal.
+- Phase B: Wald estimator: per-student sums for rec = a and rec != a, weighted by the `evaluate.student_draws` counts (sim_boot runs), and `evaluate.interval`. A run with first stage <= 0 gives NaN, and `interval` leaves it out.
+- Phase B: liftpath_explore scores: the observational row comes from the level that `resolve_points` picks for the point, with the SPEC 11 support rule. An available experimental effect replaces it for that action at every point.
+- Phase B: `style.py` holds the one palette (dataviz reference, light mode, validator PASS for the 7 method colors; 3 colors are below 3:1, so the sim line charts have direct labels). LiftPath blue, raw_success orange, explore aqua, user_cf yellow, popular magenta, random green, course_order violet, no advice gray. `figures.py` and the app import from it.
+- Phase B: `make sim` writes `data/processed/synthetic/sim/results.parquet` and `estimates.parquet`, and `reports/figures/sim_pass_rate_standard.png`, `sim_pass_rate_hidden.png` and `sim_estimates_hidden.png`. Full run (2 worlds, 7 policies, 6 cohorts of 1,000): 40 s.
+- Phase B results, final cohort pass rate (standard / hidden): liftpath 63.7% / 53.3%, liftpath_explore 48.4% / 61.0%, popular 62.2% / 59.3%, raw_success 59.7% / 57.5%, user_cf 53.2% / 52.7%, random 50.9% / 46.4%, no advice 47.9% / 44.2%.
+- Phase B expected results (full size): all PASS.
+  - Standard: liftpath (63.7%) beats raw_success (59.7%) and user_cf (53.2%) in the final cohort. PASS.
+  - Hidden: greedy liftpath gives resource 57.1% of its recommendations over cohorts 1 to 5 (weighted by advised decisions). PASS. In cohort 5 alone the share is 47.2%.
+  - Hidden: liftpath_explore gives quiz 82.5% of its recommendations in the last cohort. PASS. Its final pass rate 61.0% beats liftpath 53.3%. PASS.
+  - No parameter changed.
+- Phase B: In the hidden world, popular (59.3%) also beats greedy liftpath (53.3%) in the final cohort.
+
 ## Blocked
 - None.
 
 ## Method issues
+- Phase B: The liftpath_explore track swings between cohorts. In both worlds, cohorts that exploit quiz (82% of advice) reach high pass rates, so one more quiz week adds less (sigmoid saturation). The pooled Wald range for quiz then touches 0. Every action has an available experimental effect, so exploit gives no advice in the next cohort (advice only from the 20% explore share). That cohort gives a larger effect again. Standard world pass rates: 49.3%, 63.8%, 47.7%, 62.4%, 48.4% (cohorts 1 to 5). Hidden world: 49.0%, 45.9%, 66.1%, 47.4%, 61.0%. The final cohort of the standard world (48.4%) is below liftpath (63.7%). The experimental quiz estimates (+5 to +24 pp) are above the true effect (+4 to +5 pp), but every range holds the true effect.
 - Phase 3: Next-week effort control in tertiles leaves confounding for an action that rises with effort. On synthetic data, forumng has no true effect, but its pooled lift (0.063) is above the quiz lift (0.039). Inside a tertile, forum use still rises with clicks, and clicks rise with ability. Diagnostics with a ceil(pct * bins) rule show finer bins reduce the forumng lift but do not remove it: 5 bins give quiz 0.030 and forumng 0.040, and 10 bins give quiz 0.031 and forumng 0.034. A probe on level 0 cells (current effort and score band in the cell) gave quiz 0.041 and forumng 0.032, but it has no interval and is not a gate result. The user chose to keep SPEC sections 7 and 10. Phase 5 net lift and the synthetic truth figure must show this result.
 - Phase 5 (check before the phase): The shipped method uses level 0 cells, and it finds the true effect on synthetic data. This is a diagnostic, not a gate result. The level 0 lift tables (train points, cells with min(n_did, n_did_not) >= min_count) give a w-weighted mean lift of 0.042 for quiz (ci_low 0.026) and 0.033 for forumng. The combined se assumes independent cells, but the cells share students. On synthetic test points, LiftPath recommends quiz in 63% of its recommendations, url in 29%, glossary in 8% and forumng in 0%. The url and glossary picks are the SPEC section 20 limitation "Some winners can be chance results". The method stays as SPEC defines it.

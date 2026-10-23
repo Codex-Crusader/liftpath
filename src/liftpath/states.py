@@ -186,12 +186,16 @@ def add_score_band(grid: pd.DataFrame, con: duckdb.DuckDBPyConnection,
         score_sum=("score", "sum"), score_n=("score", "size"))
     cum = grid[[*KEY, "week"]].merge(per_week, on=[*KEY, "week"], how="left").fillna(0)
     cum[["score_sum", "score_n"]] = cum.groupby(KEY)[["score_sum", "score_n"]].cumsum()
-    n = cum["score_n"].to_numpy()
-    mean = np.divide(cum["score_sum"].to_numpy(), n, out=np.zeros(len(cum)), where=n > 0)
-    grid["score_band"] = np.select(
-        [n == 0, mean < cfg.score_low_max, mean < cfg.score_mid_max],
-        [NONE_BAND, "low", "mid"], "high")
+    grid["score_band"] = score_bands(cum["score_n"].to_numpy(), cum["score_sum"].to_numpy(),
+                                     cfg)
     return grid
+
+
+def score_bands(n: np.ndarray, total: np.ndarray, cfg: Config) -> np.ndarray:
+    """SPEC section 7 score band from the count and the sum of known scores."""
+    mean = np.divide(total, n, out=np.zeros(len(n)), where=n > 0)
+    return np.select([n == 0, mean < cfg.score_low_max, mean < cfg.score_mid_max],
+                     [NONE_BAND, "low", "mid"], "high")
 
 
 def add_week_block(grid: pd.DataFrame) -> pd.DataFrame:
