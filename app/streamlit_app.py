@@ -304,7 +304,9 @@ def route_tab(cfg) -> None:
                 st.caption("Items: " + ", ".join(map(str, step.items)))
             if step.week != route.steps[0].week:
                 st.caption(f"Projected score band: {step.score_band}")
-    st.caption(f"{route.stop_reason} {ITEM_NOTE} Effort planned: {route.effort}.")
+    st.caption(f"{route.stop_reason} {ITEM_NOTE} Effort planned: {route.effort}. "
+               f"Score bands after the first week: {PROJECTION_NOTE[0].lower()}"
+               f"{PROJECTION_NOTE[1:]}")
 
     if not np.isnan(route.projected_route):
         st.plotly_chart(projection_chart(route, GOAL_NAMES[goal].lower()), width="stretch",
@@ -453,7 +455,7 @@ def try_it_tab(meta: dict, cfg) -> None:
         st.dataframe(log, hide_index=True, width="stretch")
 
 
-def rescue_tab(meta: dict) -> None:
+def rescue_tab(meta: dict, cfg) -> None:
     edges = load_table(APP_DIR, "rescue_edges.parquet")
     info = load_json(APP_DIR, "rescue_meta.json")
     if edges is None or info is None or edges.empty:
@@ -487,8 +489,7 @@ def rescue_tab(meta: dict) -> None:
             st.dataframe(pd.DataFrame({
                 "assessment": items["assessment_id"], "activity": items["action"].map(label),
                 "old item": items["item_id"], "recovered students who revisited it":
-                    items["n_students"].map(lambda v: "fewer than 5" if pd.isna(v)
-                                            else f"{int(v)}"),
+                    [count_text(v, cfg) for v in items["n_students"]],
             }), hide_index=True, width="stretch")
 
 
@@ -608,7 +609,7 @@ def main() -> None:
     with tabs[2]:
         try_it_tab(meta, cfg)
     with tabs[3]:
-        rescue_tab(meta)
+        rescue_tab(meta, cfg)
     with tabs[4]:
         evidence_tab(cfg)
     st.caption(f"Data: Open University Learning Analytics Dataset (OULAD), CC BY 4.0. "
