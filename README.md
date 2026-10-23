@@ -21,7 +21,7 @@ Common advice and helpful advice differ for 76% of decisions. LiftPath advice: +
 
 The numbers come from `make headline` (`reports/headline.md`). The 76% is the share of 187,992 common test student-weeks where LiftPath and collaborative filtering give different activities. Net lift is the follower lift minus the lift of random advice, on test students, for the goal "pass".
 
-The app runs on your computer. The steps are in [Quick start](#quick-start).
+Live app: https://liftpath.streamlit.app (Streamlit Community Cloud). If the app slept, it takes about a minute to start. To run it on your computer, follow [Quick start](#quick-start).
 
 ## Screenshots
 
