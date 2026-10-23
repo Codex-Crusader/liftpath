@@ -45,6 +45,10 @@ The numbers come from `make headline` (`reports/headline.md`). The 76% is the sh
 
 Live app: https://liftpath.streamlit.app (Streamlit Community Cloud). If the app slept, it takes about a minute to start. To run it on your computer, follow [Quick start](#quick-start).
 
+Demo video (1 min 37 s): https://youtu.be/4ui0beX9K9I
+
+<p align="center"><a href="https://youtu.be/4ui0beX9K9I"><img src="docs/media/video_thumbnail.png" width="640" alt="Watch the LiftPath demo video on YouTube"></a></p>
+
 ## Screenshots
 
 A tour of the seven tabs:
