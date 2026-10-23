@@ -1,0 +1,160 @@
+-e .
+altair==6.3.0
+    # via streamlit
+anyio==4.15.1
+    # via
+    #   starlette
+    #   streamlit
+attrs==26.1.0
+    # via
+    #   jsonschema
+    #   referencing
+certifi==2026.10.19
+    # via requests
+charset-normalizer==3.5.2
+    # via requests
+choreographer==1.4.0
+    # via kaleido
+click==8.5.0
+    # via
+    #   streamlit
+    #   uvicorn
+cloudpickle==3.1.2
+    # via joblib
+contourpy==1.4.0
+    # via matplotlib
+cycler==0.12.1
+    # via matplotlib
+duckdb==2.0.0
+    # via liftpath
+fonttools==4.67.0
+    # via matplotlib
+h11==0.16.0
+    # via uvicorn
+idna==3.20
+    # via
+    #   anyio
+    #   requests
+itsdangerous==2.2.0
+    # via streamlit
+jinja2==3.1.6
+    # via
+    #   altair
+    #   pydeck
+joblib==1.6.0
+    # via scikit-learn
+jsonschema==4.26.0
+    # via altair
+jsonschema-specifications==2025.9.1
+    # via jsonschema
+kaleido==1.5.0
+    # via liftpath
+kiwisolver==1.5.1
+    # via matplotlib
+logistro==2.0.1
+    # via
+    #   choreographer
+    #   kaleido
+markupsafe==3.0.4
+    # via jinja2
+matplotlib==3.11.2
+    # via liftpath
+narwhals==2.27.1
+    # via
+    #   altair
+    #   plotly
+    #   scikit-learn
+networkx==3.7
+    # via liftpath
+numpy==2.5.4
+    # via
+    #   contourpy
+    #   liftpath
+    #   matplotlib
+    #   pandas
+    #   pydeck
+    #   scikit-learn
+    #   scipy
+    #   streamlit
+packaging==26.3
+    # via
+    #   altair
+    #   kaleido
+    #   matplotlib
+    #   plotly
+    #   streamlit
+pandas==3.1.0
+    # via
+    #   liftpath
+    #   streamlit
+pillow==13.0.0
+    # via
+    #   matplotlib
+    #   streamlit
+platformdirs==4.13.5
+    # via choreographer
+plotly==7.1.0
+    # via liftpath
+protobuf==7.36.2
+    # via streamlit
+pyarrow==26.0.0
+    # via
+    #   liftpath
+    #   streamlit
+pydeck==0.9.3
+    # via streamlit
+pyparsing==3.3.3
+    # via matplotlib
+python-dateutil==3.0.0
+    # via
+    #   matplotlib
+    #   pandas
+python-multipart==0.0.32
+    # via streamlit
+pyyaml==6.0.3
+    # via liftpath
+referencing==0.37.0
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+requests==2.34.2
+    # via streamlit
+rpds-py==2026.9.1
+    # via
+    #   jsonschema
+    #   referencing
+scikit-learn==1.9.1
+    # via liftpath
+scipy==1.18.1
+    # via
+    #   liftpath
+    #   scikit-learn
+simplejson==4.2.0
+    # via choreographer
+six==1.17.0
+    # via python-dateutil
+starlette==1.9.0
+    # via streamlit
+streamlit==1.66.1
+    # via liftpath
+threadpoolctl==3.7.0
+    # via scikit-learn
+typing-extensions==4.16.0
+    # via
+    #   altair
+    #   anyio
+    #   referencing
+    #   starlette
+    #   streamlit
+tzdata==2026.5
+    # via
+    #   pandas
+    #   python-dateutil
+urllib3==2.8.0
+    # via requests
+uvicorn==0.54.0
+    # via streamlit
+watchdog==6.0.0 ; sys_platform != 'darwin'
+    # via streamlit
+websockets==17.3
+    # via streamlit
