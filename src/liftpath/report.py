@@ -139,6 +139,7 @@ def run_eval(cfg: Config) -> dict:
         shares = {s: float((status == s).mean()) for s in (RECOMMEND, NO_CLEAR_WINNER, ABSTAIN)}
         common_n = int(results["common_n_points"].iloc[0])
         common = pd.concat(actions, axis=1).notna().all(axis=1)
+        assert int(common.sum()) == common_n, "disagreement must use the eval common subset"
         disagree = {m: disagreement(actions["liftpath"][common], actions[m][common])
                     for m in TRAP_METHODS}
         output["goals"][goal] = {"results": results.to_dict("records"),

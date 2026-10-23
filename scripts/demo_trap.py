@@ -1,7 +1,10 @@
-"""Show the trap card in the app for 3 sample students with different card outcomes.
+"""Show the trap card in the app for 3 sample students with different final results.
 
-BUILD2 Phase C. The cases: user_cf agrees with LiftPath, user_cf differs and its range
-contains 0, and user_cf differs with a negative range.
+BUILD2 Phase C. One student reached distinction, one passed without distinction and one did
+not pass. The final result comes from decision_points.parquet and only chooses which students
+to show. It never enters data/app or any recommendation. Inside each group the script prefers
+a different card case: user_cf agrees with LiftPath, user_cf differs with a range that
+contains 0, or user_cf differs with a negative range.
 Run with: uv run python scripts/demo_trap.py
 """
 
@@ -10,27 +13,47 @@ from pathlib import Path
 import pandas as pd
 from streamlit.testing.v1 import AppTest
 
-from liftpath.lift import RECOMMEND
+from liftpath.lift import RECOMMEND, STUDENT_KEY
 
 ROOT = Path(__file__).resolve().parents[1]
 GOAL = "goal_pass"
 TIMEOUT_S = 300
+POINTS = ROOT / "data" / "processed" / "full" / "decision_points.parquet"
+RESULTS = ("distinction", "pass", "not pass")
+CASES = ("agree", "no clear help", "negative lift")
 
 
-def pick_cases(students: pd.DataFrame) -> dict[str, pd.Series]:
+def final_results() -> pd.DataFrame:
+    goals = pd.read_parquet(POINTS, columns=[*STUDENT_KEY, "goal_pass", "goal_distinction"])
+    goals = goals.drop_duplicates(STUDENT_KEY)
+    result = pd.Series("not pass", index=goals.index)
+    result[goals["goal_pass"].astype(bool)] = "pass"
+    result[goals["goal_distinction"].astype(bool)] = "distinction"
+    return goals[STUDENT_KEY].assign(result=result)
+
+
+def card_case(rows: pd.DataFrame) -> pd.Series:
+    """The card case of each row: agree, no clear help, negative lift or other."""
+    other = rows[f"{GOAL}_user_cf_action"]
+    differ = other.notna() & (other != rows[f"{GOAL}_action"])
+    low, high = rows[f"{GOAL}_user_cf_ci_low"], rows[f"{GOAL}_user_cf_ci_high"]
+    case = pd.Series("other", index=rows.index)
+    case[other == rows[f"{GOAL}_action"]] = "agree"
+    case[differ & (low <= 0) & (high >= 0)] = "no clear help"
+    case[differ & (high < 0)] = "negative lift"
+    return case
+
+
+def pick_cases(students: pd.DataFrame, results: pd.DataFrame) -> list[tuple[str, str, pd.Series]]:
     rec = students[students[f"{GOAL}_status"] == RECOMMEND]
-    other = rec[f"{GOAL}_user_cf_action"]
-    differ = rec[other.notna() & (other != rec[f"{GOAL}_action"])]
-    low, high = differ[f"{GOAL}_user_cf_ci_low"], differ[f"{GOAL}_user_cf_ci_high"]
-    cases = {"agree": rec[other == rec[f"{GOAL}_action"]],
-             "no clear help": differ[(low <= 0) & (high >= 0)],
-             "negative lift": differ[high < 0]}
-    picked, used = {}, set()
-    for name, rows in cases.items():
-        rows = rows.sort_values(["course_id", "student_id", "week"])
-        row = rows[~rows["student_id"].isin(used)].iloc[0]
-        used.add(row["student_id"])
-        picked[name] = row
+    rec = rec.merge(results, on=STUDENT_KEY).assign(case=lambda d: card_case(d))
+    rec = rec.sort_values(["course_id", "student_id", "week"])
+    picked = []
+    for result, case in zip(RESULTS, CASES, strict=True):
+        group = rec[rec["result"] == result]
+        rows = group[group["case"] == case]
+        row = (rows if len(rows) else group).iloc[0]
+        picked.append((result, row["case"], row))
     return picked
 
 
@@ -49,8 +72,9 @@ def show(row: pd.Series) -> list[str]:
 
 def main() -> None:
     students = pd.read_parquet(ROOT / "data" / "app" / "students.parquet")
-    for name, row in pick_cases(students).items():
-        print(f"== {name}: student {row['student_id']} ({row['course_id']}), week {row['week']}")
+    for result, case, row in pick_cases(students, final_results()):
+        print(f"== final result {result}, card case {case}: student {row['student_id']} "
+              f"({row['course_id']}), week {row['week']}")
         for line in show(row):
             print(line)
 
