@@ -9,7 +9,29 @@
 
 Not what students like you did. What helped students like you.
 
-LiftPath recommends the next study activity for a student. It ranks each activity by its measured lift: the difference in goal rate between past students who did the activity next week and past students who did not. The two groups were in the same situation and studied about as much next week. LiftPath was built for the DataNova 2026 data-thon.
+LiftPath recommends the next learning module for a student: the next study activity in the course, with the reason. It ranks each activity by its measured lift: the difference in goal rate between past students who did the activity next week and past students who did not. The two groups were in the same situation and studied about as much next week. LiftPath was built for the DataNova 2026 data-thon.
+
+## How LiftPath meets the problem statement
+
+> Design a recommendation engine that personalizes learning paths for students based on performance, behavior and goals. Expected outcome: A recommendation prototype that suggests next learning modules with rationale.
+
+In the Open University data, the word "module" has two meanings.
+
+1. A course is a module. The Open University calls each course a module, and OULAD names the course column `code_module`. A student takes one course module at a time.
+2. Each learning activity inside a course is a module. The Open University platform runs on Moodle, which calls each quiz, forum, wiki, glossary and content page an activity module or a resource module. The OULAD activity types are these module names: `quiz`, `resource`, `url`, `glossary` and `page` are standard Moodle modules, and `forumng`, `oucontent`, `ouwiki` and `subpage` are modules that the Open University made for its platform.
+
+LiftPath plans the path inside the course module that the student takes. Each week, it suggests the next learning module to study, for example the quizzes or the discussion forum, and it gives the reason. LiftPath suggests the kind of module, not one specific quiz or page.
+
+| The problem statement asks for | What LiftPath does |
+|---|---|
+| A recommendation engine | Ranks the learning modules by measured lift toward the goal, against matched past students |
+| Personalized by performance | Uses the score band so far and the mark on the last assessment. After a low mark, it suggests earlier material first |
+| Personalized by behavior | Uses the effort band this week and the weeks without clicks |
+| Personalized by goals | The teacher or the student selects the goal: Pass or Distinction |
+| Learning paths | Plans the next 4 weeks and compares the plan with the typical path |
+| Next learning modules with rationale | Gives each suggestion with a reason in plain words, the evidence and a 95% range |
+| Python, collaborative filtering, graph algorithms | Python 3.12. Collaborative filtering is built and evaluated as the usual method: +0.2 points net lift, against +2.9 for LiftPath. The Rescue map is a graph of what helped after a low score, built with networkx |
+| Code, documentation, an evaluation and a presentation | This repository, `docs/`, `reports/eval.md` and `docs/slides_outline.md` |
 
 <p align="center"><img src="docs/media/teacher_view.gif" width="900" alt="The teacher view: the class card, the status groups, a filter to 'Go back first', a click on one student, the suggested steps, the 4-week plan and the message for the student"></p>
 
