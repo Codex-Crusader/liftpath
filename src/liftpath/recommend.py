@@ -93,7 +93,7 @@ def explain(rec: Recommendation, state: State, goal: str, cfg: Config) -> str:
         f"{GOAL_TEXT.get(goal, goal)} {e.p1_avg:.0%} of the time. Those who did not reached it "
         f"{e.p0_avg:.0%} of the time. Lift: {e.lift:+.0%} (95% range {e.ci_low:+.0%} to "
         f"{e.ci_high:+.0%}). Based on {show_count(e.n_did, cfg)} and "
-        f"{show_count(e.n_did_not, cfg)} students."
+        f"{show_count(e.n_did_not, cfg)} student-weeks."
     )
 
 

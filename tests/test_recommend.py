@@ -43,7 +43,7 @@ def tables():
 
 TAIL = (" who studied about as much as you did next week: those who used {label} reached a "
         "pass 62% of the time. Those who did not reached it 55% of the time. Lift: +7% "
-        "(95% range +2% to +12%). Based on 40 and 50 students.")
+        "(95% range +2% to +12%). Based on 40 and 50 student-weeks.")
 
 
 def test_recommend_level_0(cfg):
@@ -83,7 +83,7 @@ def test_small_counts_are_hidden_in_text(cfg):
     small = {0: pd.DataFrame([row(cells(0, "AAA", "early", "high", "mid"), n_did=3)])}
     rec = recommend(State("AAA", "early", "high", "mid"), "goal_distinction", small,
                     replace(cfg, min_count=1))
-    assert "Based on fewer than 5 and 50 students." in rec.rationale
+    assert "Based on fewer than 5 and 50 student-weeks." in rec.rationale
     assert "reached a distinction" in rec.rationale
 
 

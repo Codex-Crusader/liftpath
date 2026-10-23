@@ -70,15 +70,22 @@ def hand():
 def test_projection_by_hand(hand):
     cfg, _, transitions, _ = hand
     # Quiz users move to mid (4 of 4). All students: 6 stay low, 4 move to mid.
-    assert project(transitions, "M", 0, "low", "mid", "quiz", cfg)[1:] == ("mid", 0)
-    assert project(transitions, "M", 0, "low", "mid", KEEP, cfg)[1:] == ("low", 0)
+    quiz = project(transitions, "M", 0, "low", "mid", "quiz", cfg)
+    assert (quiz.level, quiz.source, quiz.bands["mid"]) == (0, "quiz", 1.0)
+    keep = project(transitions, "M", 0, "low", "mid", KEEP, cfg)
+    assert keep.bands[["low", "mid"]].tolist() == pytest.approx([0.6, 0.4])
+    # Nobody used the forum. The projection uses all students of the same week.
+    forum = project(transitions, "M", 0, "low", "mid", "forumng", cfg)
+    assert (forum.level, forum.source) == (0, KEEP)
 
     m = cfg.prior_strength
     prior = 4 / 10
-    route_rate = (3 + m * prior) / (4 + m)    # mid at week 1: students 0 to 3, 3 passed
-    typical_rate = (1 + m * prior) / (6 + m)  # low at week 1: students 4 to 9, 1 passed
+    mid_rate = (3 + m * prior) / (4 + m)  # mid at week 1: students 0 to 3, 3 passed
+    low_rate = (1 + m * prior) / (6 + m)  # low at week 1: students 4 to 9, 1 passed
     assert goal_rate(transitions, "M", 1, "mid", "mid", "goal_pass", cfg) == pytest.approx(
-        route_rate)
+        mid_rate)
+    route_rate = mid_rate
+    typical_rate = 0.6 * low_rate + 0.4 * mid_rate
 
     route = plan_route(hand_points().iloc[0], "goal_pass", hand_tables(cfg), transitions,
                        hand[3], cfg)

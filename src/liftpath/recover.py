@@ -131,5 +131,5 @@ def explain_recovery(rec: pd.Series, module: str, low_band: str, cfg: Config) ->
         f"not reached it {rec['p0_avg']:.0%} of the time. Lift: {rec['lift']:+.0%} (95% range "
         f"{rec['ci_low']:+.0%} to {rec['ci_high']:+.0%}). Based on "
         f"{show_count(int(rec['n_did']), cfg)} and {show_count(int(rec['n_did_not']), cfg)} "
-        f"students."
+        f"low-score cases."
     )

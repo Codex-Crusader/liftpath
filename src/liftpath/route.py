@@ -140,19 +140,53 @@ def mode(counts: pd.Series, order: list[str] | None = None) -> str:
     return str(counts.idxmax())
 
 
+@dataclass(frozen=True)
+class Projection:
+    block: str
+    bands: pd.Series  # share of each next score band, in SCORE_ORDER
+    level: int
+    source: str  # the step action, or KEEP when the action rows lack support
+
+
 def project(transitions: pd.DataFrame, module: str, week: int, score_band: str,
-            effort: str, action: str, cfg: Config) -> tuple[str, str, int] | None:
-    """Next (week_block, score_band, level), or None if no level has min_count points."""
+            effort: str, action: str, cfg: Config) -> Projection | None:
+    """The next week block and score band shares, or None if nothing has min_count points.
+
+    At each back-off level the action rows come first. If they lack support, the KEEP rows
+    of the same level come next, before the week window widens.
+    """
     for level in range(len(PROJECTION_LEVELS)):
-        rows = scope_rows(transitions, module, week, level)
-        rows = rows[(rows["score_band"] == score_band) & (rows["next_effort_band"] == effort)
-                    & (rows["action"] == action)]
-        if rows["n"].sum() < cfg.min_count:
-            continue
-        band = mode(rows.groupby("next_score_band")["n"].sum(), SCORE_ORDER)
-        block = next_block(transitions, module, week, rows)
-        return block, band, level
+        scope = scope_rows(transitions, module, week, level)
+        scope = scope[(scope["score_band"] == score_band)
+                      & (scope["next_effort_band"] == effort)]
+        for source in dict.fromkeys([action, KEEP]):
+            rows = scope[scope["action"] == source]
+            if rows["n"].sum() < cfg.min_count:
+                continue
+            counts = rows.groupby("next_score_band")["n"].sum().reindex(SCORE_ORDER,
+                                                                          fill_value=0)
+            return Projection(block=next_block(transitions, module, week, rows),
+                              bands=counts / counts.sum(), level=level, source=source)
     return None
+
+
+def propagate(transitions: pd.DataFrame, module: str, week: int, bands: pd.Series,
+              effort: str, action: str, cfg: Config) -> tuple[str, pd.Series] | None:
+    """Mix the projections of every current score band, weighted by its share.
+
+    None if the most likely band has no projection. Other bands without one drop out.
+    """
+    top = mode(bands[bands > 0], SCORE_ORDER)
+    head = project(transitions, module, week, top, effort, action, cfg)
+    if head is None:
+        return None
+    mixed = pd.Series(0.0, index=SCORE_ORDER)
+    for band, share in bands[bands > 0].items():
+        proj = head if band == top else project(transitions, module, week, band, effort,
+                                                action, cfg)
+        if proj is not None:
+            mixed += share * proj.bands
+    return head.block, mixed / mixed.sum()
 
 
 def next_block(transitions: pd.DataFrame, module: str, week: int,
@@ -185,37 +219,55 @@ def goal_rate(transitions: pd.DataFrame, module: str, week: int, score_band: str
     return np.nan
 
 
+def expected_rate(transitions: pd.DataFrame, module: str, week: int, bands: pd.Series,
+                  effort: str, goal: str, cfg: Config) -> float:
+    """The goal rate of each score band, weighted by the band share."""
+    shares = bands[bands > 0]
+    rates = [goal_rate(transitions, module, week, b, effort, goal, cfg) for b in shares.index]
+    return float(np.dot(shares.to_numpy(), rates))
+
+
 def plan_effort(effort_band: str, effort: str | None) -> str:
     chosen = effort or effort_band
     return "low" if chosen == NONE_BAND else chosen
 
 
-def typical_state(transitions: pd.DataFrame, module: str, week: int, last_week: int,
-                  score_band: str, effort: str, cfg: Config) -> tuple[int, str]:
-    """Project score bands with all points (KEEP) from week up to last_week."""
+def start_bands(score_band: str) -> pd.Series:
+    return pd.Series([float(b == score_band) for b in SCORE_ORDER], index=SCORE_ORDER)
+
+
+def typical_bands(transitions: pd.DataFrame, module: str, week: int, last_week: int,
+                  bands: pd.Series, effort: str, cfg: Config) -> tuple[int, pd.Series]:
+    """Project score band shares with all points (KEEP) from week up to last_week."""
     while week < last_week:
-        nxt = project(transitions, module, week, score_band, effort, KEEP, cfg)
+        nxt = propagate(transitions, module, week, bands, effort, KEEP, cfg)
         if nxt is None:
             break
-        _, score_band, _ = nxt
+        _, bands = nxt
         week += 1
-    return week, score_band
+    return week, bands
 
 
 def plan_route(student_point: pd.Series, goal: str, tables: dict[int, pd.DataFrame],
                transitions: pd.DataFrame, schedule: pd.DataFrame, cfg: Config,
                effort: str | None = None) -> Route:
-    """Route of up to plan_horizon_weeks steps from the student's decision point."""
+    """Route of up to plan_horizon_weeks steps from the student's decision point.
+
+    Each step recommends for the most likely score band. The projection carries the share
+    of every band, so the projected rates use the full spread.
+    """
     module, course_id = student_point["module"], student_point["course_id"]
-    start_week, start_band = int(student_point["week"]), student_point["score_band"]
+    start_week = int(student_point["week"])
     plan = plan_effort(student_point["effort_band"], effort)
-    week, block, band = start_week, student_point["week_block"], start_band
+    week, block = start_week, student_point["week_block"]
+    bands = start_bands(student_point["score_band"])
     effort_now = student_point["effort_band"]
     steps, stop_reason = [], "The route reached the plan horizon."
     module_weeks = transitions.loc[transitions["module"] == module, "week"]
     last_source = int(module_weeks.max()) if not module_weeks.empty else start_week - 1
 
     for _ in range(cfg.plan_horizon_weeks):
+        band = mode(bands[bands > 0], SCORE_ORDER)
         rec = recommend(State(module, block, band, effort_now), goal, tables, cfg)
         if rec.status == ABSTAIN:
             stop_reason = f"Not enough similar students to compare at week {week}."
@@ -232,22 +284,22 @@ def plan_route(student_point: pd.Series, goal: str, tables: dict[int, pd.DataFra
         if week > last_source:
             stop_reason = f"The course ends at week {week}."
             break
-        nxt = project(transitions, module, week, band, plan, action, cfg)
+        nxt = propagate(transitions, module, week, bands, plan, action, cfg)
         if nxt is None:
             stop_reason = f"Not enough past students to project week {week + 1}."
             break
-        block, band, _ = nxt
+        block, bands = nxt
         week, effort_now = week + 1, plan
 
     if not steps:
         return Route((), np.nan, np.nan, plan, goal, stop_reason)
-    typical_week, typical_band = typical_state(transitions, module, start_week, week,
-                                               start_band, plan, cfg)
+    typical_week, typical = typical_bands(transitions, module, start_week, week,
+                                          start_bands(student_point["score_band"]), plan, cfg)
     return Route(
         steps=tuple(steps),
-        projected_route=goal_rate(transitions, module, week, band, plan, goal, cfg),
-        projected_typical=goal_rate(transitions, module, typical_week, typical_band, plan,
-                                    goal, cfg),
+        projected_route=expected_rate(transitions, module, week, bands, plan, goal, cfg),
+        projected_typical=expected_rate(transitions, module, typical_week, typical, plan,
+                                        goal, cfg),
         effort=plan, goal=goal, stop_reason=stop_reason)
 
 

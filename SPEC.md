@@ -119,7 +119,7 @@ Statuses: recommend, no_clear_winner, abstain. "Coverage" means status is not ab
 
 ## 12. Rationale text
 Template (status recommend):
-"Students in a similar situation ({module}, {week_block} weeks, {score_band} scores, {effort_band} effort) who studied about as much as you did next week: those who used {label} reached {goal} {p1_avg:.0%} of the time. Those who did not reached it {p0_avg:.0%} of the time. Lift: {lift:+.0%} (95% range {ci_low:+.0%} to {ci_high:+.0%}). Based on {n_did} and {n_did_not} students."
+"Students in a similar situation ({module}, {week_block} weeks, {score_band} scores, {effort_band} effort) who studied about as much as you did next week: those who used {label} reached {goal} {p1_avg:.0%} of the time. Those who did not reached it {p0_avg:.0%} of the time. Lift: {lift:+.0%} (95% range {ci_low:+.0%} to {ci_high:+.0%}). Based on {n_did} and {n_did_not} student-weeks."
 - Remove cell parts dropped by back-off. Add "(compared across all weeks)" at level 1 and "(compared across all courses)" at level 2.
 - Show any count below display_min_count as "fewer than 5".
 
