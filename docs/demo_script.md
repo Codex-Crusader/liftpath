@@ -34,7 +34,7 @@ Say: "The route projects 93.5% against 91.4% for the typical path. This is a pro
 
 Screen: the section "What common advice says".
 
-Say: "Here, common advice agrees with LiftPath on course pages. Across all test students, it disagrees 76% of the time."
+Say: "Here, common advice agrees with LiftPath on course pages. On the test student-weeks where every method gives an activity, it disagrees 76% of the time."
 
 5. Click "Why?" to open it.
 
@@ -49,7 +49,7 @@ Say: "Every number has its counts. A teacher can compute the lift by hand from t
 
 Screen: the pass rate chart by cohort and the table of means.
 
-Say: "In the simulator we know the truth: only quizzes help. In the hidden confounder world, able students also use files, which do nothing. Every observational method is fooled, LiftPath too. LiftPath plus explore tries random advice 20% of the time, which gives an experiment. Its estimate sits above the true effect, so we show the means next to the last cohort."
+Say: "In the simulator we know the truth: only quizzes help. In the hidden confounder world, able students also use files, which do nothing. Greedy LiftPath and raw success are pulled toward files. Popular does well only because quizzes are the most used activity in this world. LiftPath plus explore tries random advice 20% of the time, which gives an experiment. Its estimate sits above the true effect, so we show the means next to the last cohort."
 
 ## 2:05 to 2:35, Try it
 

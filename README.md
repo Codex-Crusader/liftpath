@@ -59,7 +59,7 @@ You need Python 3.12, [uv](https://docs.astral.sh/uv/), GNU make and Google Chro
 
 ```sh
 make setup      # create the environment
-make all        # download OULAD and build everything (about 10 min)
+make all        # download OULAD and build everything (about 5 min, plus the download on the first run)
 make test       # run the tests
 make app        # start the app at http://localhost:8501
 ```
