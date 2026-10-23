@@ -21,6 +21,7 @@ from liftpath.lift import (
     lift_tables,
     resolve_points,
 )
+from liftpath.live import CUTOFF_FILE, effort_cutoffs
 from liftpath.privacy import suppress_counts
 from liftpath.recover import RECOVERY_LEVELS, recovery_tables
 from liftpath.trap import TRAP_COLS, TRAP_METHODS, trap_columns
@@ -102,6 +103,7 @@ def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
                   out_dir / f"best_{goal}_level{level}.parquet")
         write(audit_table(train, candidates, goal, cfg), out_dir / f"audit_{goal}.parquet")
     write(students, out_dir / "students.parquet")
+    write(effort_cutoffs(train), out_dir / CUTOFF_FILE)
 
     rtrain = recovery_points[recovery_points["split"] == "train"]
     rtest = recovery_points[recovery_points["split"] == "test"][RECOVERY_COLS].copy()

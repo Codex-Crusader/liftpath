@@ -18,6 +18,9 @@ dependencies = [
     "streamlit",
 ]
 
+[project.scripts]
+liftpath = "liftpath.cli:main"
+
 [dependency-groups]
 dev = [
     "pytest",

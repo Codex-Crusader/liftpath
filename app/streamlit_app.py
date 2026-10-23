@@ -12,6 +12,7 @@ import streamlit as st
 from liftpath.config import load_config
 from liftpath.fairness import SMALL_SAMPLE_STUDENTS
 from liftpath.lift import ABSTAIN, LEVELS, NO_CLEAR_WINNER, RECOMMEND
+from liftpath.live import load_lift_tables
 from liftpath.recommend import State, label, recommend, show_count, situation
 from liftpath.recover import explain_recovery
 from liftpath.style import BLUE, GRID, MUTED
@@ -44,8 +45,10 @@ def load_table(folder: str, name: str) -> pd.DataFrame | None:
     return table
 
 
+@st.cache_data
 def lift_tables(goal: str) -> dict[int, pd.DataFrame]:
-    return {level: load_table(APP_DIR, f"{goal}_level{level}.parquet") for level in LEVELS}
+    """The live tables when they exist (BUILD2 Phase D), else the app tables."""
+    return load_lift_tables(goal, Path(APP_DIR))
 
 
 def app_config(meta: dict):

@@ -45,6 +45,7 @@ def app_dir(tmp_path_factory):
 
 def test_app_tabs_run(app_dir, monkeypatch):
     monkeypatch.setenv("APP_DATA_DIR", str(app_dir))
+    monkeypatch.setenv("LIVE_DATA_DIR", str(app_dir / "no_live"))
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
@@ -56,6 +57,7 @@ def test_app_tabs_run(app_dir, monkeypatch):
 
 def test_app_other_goal(app_dir, monkeypatch):
     monkeypatch.setenv("APP_DATA_DIR", str(app_dir))
+    monkeypatch.setenv("LIVE_DATA_DIR", str(app_dir / "no_live"))
     at = AppTest.from_file(str(ROOT / "app" / "streamlit_app.py"), default_timeout=TIMEOUT_S)
     at.run()
     # Every radio in the app is a goal choice.

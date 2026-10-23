@@ -14,6 +14,7 @@ from liftpath.adapters.synthetic import write_synthetic
 from liftpath.app_data import FIGURES, build_app_data
 from liftpath.config import Config, load_config
 from liftpath.db import connect
+from liftpath.engine import ENGINE_COMMANDS, add_engine_parsers, run_engine
 from liftpath.figures import sim_estimates_figure, sim_pass_rate_figure
 from liftpath.lift import best_actions, lift_tables, resolve_points
 from liftpath.paths import (
@@ -254,7 +255,11 @@ def main(argv: list[str] | None = None) -> None:
     sub = parser.add_subparsers(dest="step", required=True)
     for step in STEPS:
         sub.add_parser(step)
+    add_engine_parsers(sub)
     args = parser.parse_args(argv)
+    if args.step in ENGINE_COMMANDS:
+        run_engine(args, load_config())
+        return
     HANDLERS.get(args.step, not_built)(load_config())
 
 
