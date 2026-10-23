@@ -6,14 +6,38 @@ Not what students like you did. What helped students like you.
 
 LiftPath recommends the next study activity for a student. It ranks each activity by its measured lift: the difference in goal rate between past students who did the activity next week and past students who did not. The two groups were in the same situation and studied about as much next week. LiftPath was built for the DataNova 2026 data-thon.
 
+<p align="center"><img src="docs/media/teacher_view.gif" width="900" alt="The teacher view: the class card, the status groups, a filter to 'Go back first', a click on one student, the suggested steps, the 4-week plan and the message for the student"></p>
+
+The teacher view opens first. It shows one next step for each student in plain words, the reason, a 4-week plan and a message to copy.
+
 ## Headline
 
 Common advice and helpful advice differ for 76% of decisions. LiftPath advice: +2.9 points net lift. Collaborative filtering: +0.2.
 
 The numbers come from `make headline` (`reports/headline.md`). The 76% is the share of 187,992 common test student-weeks where LiftPath and collaborative filtering give different activities. Net lift is the follower lift minus the lift of random advice, on test students, for the goal "pass".
 
-- Live app: LINK PLACEHOLDER
-- Demo video: GIF PLACEHOLDER
+The app runs on your computer. The steps are in [Quick start](#quick-start).
+
+## Screenshots
+
+A tour of the seven tabs:
+
+<p align="center"><img src="docs/media/tour.gif" width="900" alt="A tour of the tabs: Teacher view, Your route, Simulator, Rescue map, Evidence and Settings"></p>
+
+<table>
+<tr>
+<td width="50%"><img src="docs/media/student_panel.png" alt="One student: the suggested steps with their reasons, the 4-week plan and the message"><br>One student: the steps, the plan and the message.</td>
+<td width="50%"><img src="docs/media/evidence.png" alt="The Evidence tab: the headline numbers and the follower lift of each recommender"><br>Evidence: the headline numbers and the lift of each method.</td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/media/simulator.png" alt="The Simulator tab: pass rate by cohort for each advice policy"><br>Simulator: synthetic students with a known truth.</td>
+<td width="50%"><img src="docs/media/rescue_map.png" alt="The Rescue map tab: which activity types helped after a low score, per assessment"><br>Rescue map: what helped after a low score.</td>
+</tr>
+</table>
+
+The app also works at phone width:
+
+<p align="center"><img src="docs/media/phone.png" width="760" alt="Three phone screens: the teacher view, the suggested steps for one student, and the Evidence tab"></p>
 
 ## Features
 
@@ -56,6 +80,8 @@ Real data: OULAD, train on the other presentations (2013B, 2013J, 2014B), test o
 - For the pass goal, LiftPath does not beat raw_success on the common subset: the difference is +0.3 pp (95% range -0.5 to +1.2 pp). For the distinction goal, LiftPath has +5.9 pp net lift and raw_success +3.0 pp.
 - Simulator, cohort 5: LiftPath minus no advice is +15.8 pp in the standard world and +9.1 pp in the hidden confounder world. The means over cohorts 2 to 5 are +11.7 pp and +6.2 pp. The popular policy has the best mean in both worlds, because in this synthetic world the most used activity is also the only helpful one.
 
+<p align="center"><img src="reports/slides/eval_real_data.png" width="800" alt="Net lift of each recommender on the 2014J test students, with 95% ranges, for the goals pass and distinction"></p>
+
 Full reports: `reports/eval.md`, `reports/fairness.md`, `reports/headline.md`. Slide figures: `reports/slides/`.
 
 ## Quick start
@@ -86,7 +112,7 @@ Score bands: none, low, mid, high. Effort bands: none, low, mid, high. The outpu
 
 LiftPath uses the Open University Learning Analytics Dataset (OULAD), license CC BY 4.0.
 
-Kuzilek J., Hlosta M., Zdrahal Z. "Open University Learning Analytics dataset." Scientific Data 4, article 170171, 2017. DOI 10.1038/sdata.2017.171 (verify the article number and DOI).
+Kuzilek J., Hlosta M., Zdrahal Z. "Open University Learning Analytics dataset." Scientific Data 4, article 170171, 2017. DOI [10.1038/sdata.2017.171](https://doi.org/10.1038/sdata.2017.171).
 
 `make data` downloads the dataset from the UCI Machine Learning Repository. The committed app data holds no counts below 5 and no student outcomes. Details: `docs/datasheet.md`.
 
@@ -116,6 +142,7 @@ data/app/                committed app data (counts below 5 suppressed)
 reports/                 evaluation reports, figures and slide figures
 docs/                    method, model card, datasheet, slides outline, demo script,
                          teacher guide, administrator guide
+docs/media/              README screenshots and GIFs (captured from the running app)
 SPEC.md                  the exact rules
 PROGRESS.md              build log, decisions and results
 ```
