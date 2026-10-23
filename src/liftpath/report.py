@@ -66,6 +66,17 @@ def common_table(results: pd.DataFrame) -> str:
     return "\n".join(lines)
 
 
+def reference_table(results: pd.DataFrame) -> str:
+    lines = ["| recommender | all test points | 95% range | common subset | 95% range |",
+             "|---|---|---|---|---|"]
+    for r in results[results["name"] != "liftpath"].itertuples():
+        lines.append(f"| {r.name} | {pp(r.ref_minus)} | "
+                     f"{span(r.ref_minus_ci_low, r.ref_minus_ci_high)} | "
+                     f"{pp(r.common_ref_minus)} | "
+                     f"{span(r.common_ref_minus_ci_low, r.common_ref_minus_ci_high)} |")
+    return "\n".join(lines)
+
+
 def truth_table(actions: dict[str, pd.Series]) -> tuple[pd.DataFrame, str]:
     """Synthetic only: per recommender, the share of its actions that have a true effect."""
     shares = pd.DataFrame({name: a.value_counts(normalize=True) for name, a in actions.items()})
@@ -121,7 +132,8 @@ def run_eval(cfg: Config) -> dict:
                    "raw_success": make_raw_success(train, candidates, goal, cfg)(test),
                    "liftpath": make_liftpath(tables, goal, cfg)(test)}
         actions = {name: actions[name] for name in ORDER}
-        results = evaluate_all(test, {n: cached(a) for n, a in actions.items()}, goal, cfg)
+        results = evaluate_all(test, {n: cached(a) for n, a in actions.items()}, goal, cfg,
+                               reference="liftpath")
         status = resolve_points(test, best_actions(tables, cfg))["status"]
         shares = {s: float((status == s).mean()) for s in (RECOMMEND, NO_CLEAR_WINNER, ABSTAIN)}
         common_n = int(results["common_n_points"].iloc[0])
@@ -132,7 +144,10 @@ def run_eval(cfg: Config) -> dict:
                f"{shares[NO_CLEAR_WINNER]:.1%}, abstain {shares[ABSTAIN]:.1%}. LiftPath gives an "
                "action only for recommend, so its coverage above is the recommend share.", "",
                f"### Common subset ({common_n:,} test points where every recommender gives an "
-               "action)", "", common_table(results), ""]
+               "action)", "", common_table(results), "",
+               "### LiftPath minus each recommender (paired bootstrap)", "",
+               "A range above zero means LiftPath has the higher follower lift.", "",
+               reference_table(results), ""]
 
         if goal == PRIMARY:
             eval_lift_figure(results, goal_name, figures / f"eval_lift{suffix(cfg)}.png")

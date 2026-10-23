@@ -32,6 +32,18 @@ LiftPath status shares: recommend 61.8%, no_clear_winner 38.2%, abstain 0.0%. Li
 | raw_success | +3.0 pp | +2.0 pp to +3.9 pp | +2.7 pp | +1.7 pp to +3.6 pp |
 | liftpath | +3.3 pp | +2.5 pp to +4.0 pp | +3.0 pp | +2.3 pp to +3.7 pp |
 
+### LiftPath minus each recommender (paired bootstrap)
+
+A range above zero means LiftPath has the higher follower lift.
+
+| recommender | all test points | 95% range | common subset | 95% range |
+|---|---|---|---|---|
+| random | +2.9 pp | +2.2 pp to +3.6 pp | +3.0 pp | +2.3 pp to +3.7 pp |
+| popular | +1.6 pp | +0.8 pp to +2.4 pp | +1.2 pp | +0.4 pp to +2.1 pp |
+| course_order | +1.1 pp | +0.1 pp to +1.9 pp | +0.9 pp | +0.0 pp to +1.7 pp |
+| user_cf | +2.8 pp | +1.9 pp to +3.7 pp | +2.9 pp | +2.1 pp to +3.8 pp |
+| raw_success | +1.0 pp | +0.5 pp to +1.7 pp | +0.3 pp | -0.5 pp to +1.2 pp |
+
 ## Goal: distinction
 
 | recommender | coverage | follower lift | 95% range | net lift | 95% range |
@@ -55,6 +67,18 @@ LiftPath status shares: recommend 54.3%, no_clear_winner 45.7%, abstain 0.0%. Li
 | user_cf | +1.5 pp | +0.7 pp to +2.3 pp | +1.5 pp | +0.6 pp to +2.3 pp |
 | raw_success | +4.0 pp | +2.7 pp to +5.5 pp | +4.0 pp | +2.7 pp to +5.7 pp |
 | liftpath | +5.9 pp | +4.7 pp to +7.0 pp | +5.9 pp | +4.6 pp to +7.1 pp |
+
+### LiftPath minus each recommender (paired bootstrap)
+
+A range above zero means LiftPath has the higher follower lift.
+
+| recommender | all test points | 95% range | common subset | 95% range |
+|---|---|---|---|---|
+| random | +5.9 pp | +4.6 pp to +7.0 pp | +5.9 pp | +4.6 pp to +7.1 pp |
+| popular | +4.8 pp | +3.5 pp to +6.0 pp | +4.6 pp | +3.1 pp to +6.1 pp |
+| course_order | +4.2 pp | +2.7 pp to +5.4 pp | +4.2 pp | +2.8 pp to +5.5 pp |
+| user_cf | +4.9 pp | +3.7 pp to +5.9 pp | +4.4 pp | +3.2 pp to +5.5 pp |
+| raw_success | +2.8 pp | +1.9 pp to +3.7 pp | +1.9 pp | +0.9 pp to +2.6 pp |
 
 ## Gate 3
 

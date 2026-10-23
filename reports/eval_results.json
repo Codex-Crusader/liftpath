@@ -26,6 +26,9 @@
           "net_lift": 0.0,
           "net_ci_low": 0.0,
           "net_ci_high": 0.0,
+          "ref_minus": 0.02942156216842343,
+          "ref_minus_ci_low": 0.021933418490385947,
+          "ref_minus_ci_high": 0.03602917386087717,
           "common_lift": 0.0032030297254075613,
           "common_ci_low": -0.0014320080386085112,
           "common_ci_high": 0.009330100180177364,
@@ -33,7 +36,10 @@
           "common_n_points": 187992,
           "common_net_lift": 0.0,
           "common_net_ci_low": 0.0,
-          "common_net_ci_high": 0.0
+          "common_net_ci_high": 0.0,
+          "common_ref_minus": 0.029956382576999233,
+          "common_ref_minus_ci_low": 0.022574817319221355,
+          "common_ref_minus_ci_high": 0.03739695647955129
         },
         {
           "name": "popular",
@@ -45,6 +51,9 @@
           "net_lift": 0.013199689029920173,
           "net_ci_low": 0.006300157817092321,
           "net_ci_high": 0.020215244434480122,
+          "ref_minus": 0.016221873138503255,
+          "ref_minus_ci_low": 0.007963689825405143,
+          "ref_minus_ci_high": 0.024104032186667776,
           "common_lift": 0.020941529156075556,
           "common_ci_low": 0.013610723714699534,
           "common_ci_high": 0.029371112235401096,
@@ -52,7 +61,10 @@
           "common_n_points": 187992,
           "common_net_lift": 0.017738499430667996,
           "common_net_ci_low": 0.008989558569780934,
-          "common_net_ci_high": 0.026396498558291362
+          "common_net_ci_high": 0.026396498558291362,
+          "common_ref_minus": 0.012217883146331238,
+          "common_ref_minus_ci_low": 0.004201127996901447,
+          "common_ref_minus_ci_high": 0.021015715414298784
         },
         {
           "name": "course_order",
@@ -64,6 +76,9 @@
           "net_lift": 0.0184141510483427,
           "net_ci_low": 0.0114325045761921,
           "net_ci_high": 0.02576353558336105,
+          "ref_minus": 0.011007411120080728,
+          "ref_minus_ci_low": 0.0014351585138174263,
+          "ref_minus_ci_high": 0.018853944250004105,
           "common_lift": 0.024316813789085616,
           "common_ci_low": 0.01655744282695269,
           "common_ci_high": 0.033729230641992645,
@@ -71,7 +86,10 @@
           "common_n_points": 187992,
           "common_net_lift": 0.021113784063678056,
           "common_net_ci_low": 0.01272826557618101,
-          "common_net_ci_high": 0.029306103201793717
+          "common_net_ci_high": 0.029306103201793717,
+          "common_ref_minus": 0.008842598513321177,
+          "common_ref_minus_ci_low": 6.553739398278905e-05,
+          "common_ref_minus_ci_high": 0.017085132317562736
         },
         {
           "name": "user_cf",
@@ -83,6 +101,9 @@
           "net_lift": 0.0016202929256907569,
           "net_ci_low": -0.005246513682258191,
           "net_ci_high": 0.00769115839162226,
+          "ref_minus": 0.02780126924273267,
+          "ref_minus_ci_low": 0.019335240272574893,
+          "ref_minus_ci_high": 0.0366068333714603,
           "common_lift": 0.0038187313184795246,
           "common_ci_low": -0.0030915956516109518,
           "common_ci_high": 0.01107564346886751,
@@ -90,7 +111,10 @@
           "common_n_points": 187992,
           "common_net_lift": 0.0006157015930719632,
           "common_net_ci_low": -0.007394508804583681,
-          "common_net_ci_high": 0.008263603020313395
+          "common_net_ci_high": 0.008263603020313395,
+          "common_ref_minus": 0.029340680983927267,
+          "common_ref_minus_ci_low": 0.021306653754260114,
+          "common_ref_minus_ci_high": 0.03781636353446041
         },
         {
           "name": "raw_success",
@@ -102,6 +126,9 @@
           "net_lift": 0.019135799295443307,
           "net_ci_low": 0.012910826558740028,
           "net_ci_high": 0.025910033118196556,
+          "ref_minus": 0.010285762872980123,
+          "ref_minus_ci_low": 0.004674977911821936,
+          "ref_minus_ci_high": 0.017268506291879662,
           "common_lift": 0.03015424804351853,
           "common_ci_low": 0.020119999036858814,
           "common_ci_high": 0.038710122767760556,
@@ -109,7 +136,10 @@
           "common_n_points": 187992,
           "common_net_lift": 0.02695121831811097,
           "common_net_ci_low": 0.017152306650736675,
-          "common_net_ci_high": 0.03626343231592024
+          "common_net_ci_high": 0.03626343231592024,
+          "common_ref_minus": 0.0030051642588882627,
+          "common_ref_minus_ci_low": -0.005162758040366511,
+          "common_ref_minus_ci_high": 0.011606754490658499
         },
         {
           "name": "liftpath",
@@ -121,6 +151,9 @@
           "net_lift": 0.02942156216842343,
           "net_ci_low": 0.021933418490385947,
           "net_ci_high": 0.03602917386087717,
+          "ref_minus": 0.0,
+          "ref_minus_ci_low": 0.0,
+          "ref_minus_ci_high": 0.0,
           "common_lift": 0.03315941230240679,
           "common_ci_low": 0.025461966023069264,
           "common_ci_high": 0.040060617498713355,
@@ -128,7 +161,10 @@
           "common_n_points": 187992,
           "common_net_lift": 0.029956382576999233,
           "common_net_ci_low": 0.022574817319221355,
-          "common_net_ci_high": 0.03739695647955129
+          "common_net_ci_high": 0.03739695647955129,
+          "common_ref_minus": 0.0,
+          "common_ref_minus_ci_low": 0.0,
+          "common_ref_minus_ci_high": 0.0
         }
       ],
       "liftpath_status_shares": {
@@ -150,6 +186,9 @@
           "net_lift": 0.0,
           "net_ci_low": 0.0,
           "net_ci_high": 0.0,
+          "ref_minus": 0.05870589256144168,
+          "ref_minus_ci_low": 0.0461031837462595,
+          "ref_minus_ci_high": 0.07007216381483576,
           "common_lift": -0.00026200716574368476,
           "common_ci_low": -0.005291291429387517,
           "common_ci_high": 0.004627438010941698,
@@ -157,7 +196,10 @@
           "common_n_points": 167438,
           "common_net_lift": 0.0,
           "common_net_ci_low": 0.0,
-          "common_net_ci_high": 0.0
+          "common_net_ci_high": 0.0,
+          "common_ref_minus": 0.05887282718917215,
+          "common_ref_minus_ci_low": 0.04637463351290184,
+          "common_ref_minus_ci_high": 0.07053435377466095
         },
         {
           "name": "popular",
@@ -169,6 +211,9 @@
           "net_lift": 0.01037918641362013,
           "net_ci_low": 0.004129774231224045,
           "net_ci_high": 0.0172334443016962,
+          "ref_minus": 0.04832670614782155,
+          "ref_minus_ci_low": 0.03519052420915103,
+          "ref_minus_ci_high": 0.0602642182594097,
           "common_lift": 0.012324717643836811,
           "common_ci_low": 0.003886852259964925,
           "common_ci_high": 0.02032950147527835,
@@ -176,7 +221,10 @@
           "common_n_points": 167438,
           "common_net_lift": 0.012586724809580495,
           "common_net_ci_low": 0.0029469063754016815,
-          "common_net_ci_high": 0.021802567127647124
+          "common_net_ci_high": 0.021802567127647124,
+          "common_ref_minus": 0.04628610237959166,
+          "common_ref_minus_ci_low": 0.03091650806230547,
+          "common_ref_minus_ci_high": 0.06051941599415568
         },
         {
           "name": "course_order",
@@ -188,6 +236,9 @@
           "net_lift": 0.016375131253764268,
           "net_ci_low": 0.009509218731846066,
           "net_ci_high": 0.022989668374222443,
+          "ref_minus": 0.04233076130767741,
+          "ref_minus_ci_low": 0.02747181725474056,
+          "ref_minus_ci_high": 0.05421214853231704,
           "common_lift": 0.01665728271421675,
           "common_ci_low": 0.007424229638049979,
           "common_ci_high": 0.024530632369941976,
@@ -195,7 +246,10 @@
           "common_n_points": 167438,
           "common_net_lift": 0.016919289879960435,
           "common_net_ci_low": 0.00716572871608495,
-          "common_net_ci_high": 0.026013592527359894
+          "common_net_ci_high": 0.026013592527359894,
+          "common_ref_minus": 0.04195353730921172,
+          "common_ref_minus_ci_low": 0.028082110200595155,
+          "common_ref_minus_ci_high": 0.054904477041055506
         },
         {
           "name": "user_cf",
@@ -207,6 +261,9 @@
           "net_lift": 0.009934343680706068,
           "net_ci_low": 0.003847620692239855,
           "net_ci_high": 0.016155066302600215,
+          "ref_minus": 0.048771548880735614,
+          "ref_minus_ci_low": 0.03700242981996587,
+          "ref_minus_ci_high": 0.05896200080700774,
           "common_lift": 0.01466929614487267,
           "common_ci_low": 0.00690067262871044,
           "common_ci_high": 0.023142074645285882,
@@ -214,7 +271,10 @@
           "common_n_points": 167438,
           "common_net_lift": 0.014931303310616354,
           "common_net_ci_low": 0.0055326906268219345,
-          "common_net_ci_high": 0.023073307439281817
+          "common_net_ci_high": 0.023073307439281817,
+          "common_ref_minus": 0.0439415238785558,
+          "common_ref_minus_ci_low": 0.032037373629724156,
+          "common_ref_minus_ci_high": 0.05470231377742687
         },
         {
           "name": "raw_success",
@@ -226,6 +286,9 @@
           "net_lift": 0.03026074802524114,
           "net_ci_low": 0.020753963705200763,
           "net_ci_high": 0.043020959031984045,
+          "ref_minus": 0.02844514453620054,
+          "ref_minus_ci_low": 0.018752837649192222,
+          "ref_minus_ci_high": 0.036659865041595796,
           "common_lift": 0.03965552266675151,
           "common_ci_low": 0.027007549322026047,
           "common_ci_high": 0.05469204752372783,
@@ -233,7 +296,10 @@
           "common_n_points": 167438,
           "common_net_lift": 0.03991752983249519,
           "common_net_ci_low": 0.02683793632883111,
-          "common_net_ci_high": 0.05720395317083866
+          "common_net_ci_high": 0.05720395317083866,
+          "common_ref_minus": 0.01895529735667696,
+          "common_ref_minus_ci_low": 0.008529437656873941,
+          "common_ref_minus_ci_high": 0.026489832592947724
         },
         {
           "name": "liftpath",
@@ -245,6 +311,9 @@
           "net_lift": 0.05870589256144168,
           "net_ci_low": 0.0461031837462595,
           "net_ci_high": 0.07007216381483576,
+          "ref_minus": 0.0,
+          "ref_minus_ci_low": 0.0,
+          "ref_minus_ci_high": 0.0,
           "common_lift": 0.05861082002342847,
           "common_ci_low": 0.046565342140423224,
           "common_ci_high": 0.06993087319860607,
@@ -252,7 +321,10 @@
           "common_n_points": 167438,
           "common_net_lift": 0.05887282718917215,
           "common_net_ci_low": 0.04637463351290184,
-          "common_net_ci_high": 0.07053435377466095
+          "common_net_ci_high": 0.07053435377466095,
+          "common_ref_minus": 0.0,
+          "common_ref_minus_ci_low": 0.0,
+          "common_ref_minus_ci_high": 0.0
         }
       ],
       "liftpath_status_shares": {

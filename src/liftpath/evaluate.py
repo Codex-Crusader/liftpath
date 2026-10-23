@@ -108,10 +108,12 @@ def follower_lift(points: pd.DataFrame, actions: pd.Series, goal_col: str,
 
 
 def evaluate_all(test: pd.DataFrame, recommenders: dict[str, Recommender],
-                 goal_col: str, cfg: Config) -> pd.DataFrame:
+                 goal_col: str, cfg: Config, reference: str | None = None) -> pd.DataFrame:
     """All metrics per recommender, on all test points and on the common subset.
 
     The common subset is the test points where every recommender gives an action.
+    With a reference recommender, the ref_minus columns give reference minus R with a
+    paired range.
     """
     students = student_index(test)
     draws = student_draws(students.max() + 1, cfg, np.random.default_rng(cfg.seed))
@@ -138,5 +140,11 @@ def evaluate_all(test: pd.DataFrame, recommenders: dict[str, Recommender],
             net_low, net_high = interval(boots[scope, name] - boots[scope, BASELINE], cfg)
             row.update({f"{prefix}net_lift": rows[scope, name]["lift"] - base,
                         f"{prefix}net_ci_low": net_low, f"{prefix}net_ci_high": net_high})
+            if reference is not None:
+                ref_low, ref_high = interval(boots[scope, reference] - boots[scope, name], cfg)
+                row.update({f"{prefix}ref_minus": rows[scope, reference]["lift"]
+                            - rows[scope, name]["lift"],
+                            f"{prefix}ref_minus_ci_low": ref_low,
+                            f"{prefix}ref_minus_ci_high": ref_high})
         table.append(row)
     return pd.DataFrame(table)

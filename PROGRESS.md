@@ -79,10 +79,14 @@
 - Phase 5: Fairness joins demographics from enrollments. A NULL imd_band is the group "unknown". The small-sample flag counts unique students (n < 200). `fairness.SMALL_SAMPLE_STUDENTS = 200` comes from SPEC section 17.
 - Phase 5: Report names: the full scope writes `reports/eval.md`, `eval_results.json`, `fairness.md` and `figures/eval_lift.png`, `figures/fairness.png`. Other scopes add `_<scope>`. The synthetic run also writes `figures/synthetic_truth.png` and a ground truth table.
 - Phase 5: Figure colors: LiftPath is blue (#2a78d6) and raw_success is orange (#eb6834) in every figure. The pair passed the dataviz palette validator (light mode).
+- Phase 5: `evaluate_all` takes an optional `reference`. The reports add a "LiftPath minus each recommender" table with paired ranges.
+- Phase 5: A rerun of `make eval` gives the same reports and figures. The bootstrap is deterministic under the config seed.
+- Phase 5: `make all` does not build the synthetic scope. Phase 6 must use the committed `reports/figures/synthetic_truth.png`, or `make all` must add the synthetic steps.
 - Phase 5: `make eval` takes 38 s on full data and 10 s on synthetic data.
 - Phase 5 results, full data, net lift (minus random) with 95% range:
   - Pass: LiftPath +2.9 pp (+2.2 to +3.6). raw_success +1.9 pp (+1.3 to +2.6). course_order +1.8 pp (+1.1 to +2.6). On the common subset: LiftPath +3.0 pp (+2.3 to +3.7), raw_success +2.7 pp (+1.7 to +3.6). The ranges overlap.
   - Distinction: LiftPath +5.9 pp (+4.6 to +7.0). raw_success +3.0 pp (+2.1 to +4.3). On the common subset: LiftPath +5.9 pp (+4.6 to +7.1), raw_success +4.0 pp (+2.7 to +5.7).
+  - LiftPath minus raw_success, paired bootstrap: pass +1.0 pp (+0.5 to +1.7) on all test points, +0.3 pp (-0.5 to +1.2) on the common subset. Distinction +2.8 pp (+1.9 to +3.7), and +1.9 pp (+0.9 to +2.6) on the common subset. For the pass goal, LiftPath does not beat raw_success on the common subset.
   - LiftPath status shares (pass): recommend 61.8%, no_clear_winner 38.2%, abstain 0.0%.
 - Phase 5 results, synthetic data:
   - Ground truth (pass goal, test points): quiz share of recommendations: LiftPath 63.0%, raw_success 21.1%, random 12.2%, popular 60.8%, course_order 82.2%, user_cf 19.9%. forumng share: LiftPath 0.0%, raw_success 43.5%.

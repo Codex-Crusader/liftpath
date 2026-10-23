@@ -32,6 +32,18 @@ LiftPath status shares: recommend 66.9%, no_clear_winner 32.9%, abstain 0.3%. Li
 | raw_success | +4.8 pp | +3.1 pp to +7.1 pp | +2.8 pp | +0.1 pp to +5.4 pp |
 | liftpath | +3.4 pp | +1.7 pp to +5.1 pp | +1.4 pp | -1.3 pp to +3.6 pp |
 
+### LiftPath minus each recommender (paired bootstrap)
+
+A range above zero means LiftPath has the higher follower lift.
+
+| recommender | all test points | 95% range | common subset | 95% range |
+|---|---|---|---|---|
+| random | +2.0 pp | -0.2 pp to +4.3 pp | +1.4 pp | -1.3 pp to +3.6 pp |
+| popular | -1.5 pp | -3.3 pp to +0.4 pp | -0.6 pp | -2.7 pp to +1.3 pp |
+| course_order | -0.7 pp | -2.4 pp to +0.9 pp | -0.6 pp | -2.0 pp to +1.0 pp |
+| user_cf | +1.1 pp | -0.8 pp to +3.0 pp | +0.2 pp | -2.1 pp to +2.3 pp |
+| raw_success | -0.3 pp | -2.4 pp to +1.6 pp | -1.4 pp | -3.8 pp to +0.3 pp |
+
 ## Ground truth (synthetic data)
 
 In the synthetic data, only quiz has a true effect on passing. forumng use rises with effort, but it has no effect. This table does not depend on follower lift.
@@ -70,6 +82,18 @@ LiftPath status shares: recommend 57.6%, no_clear_winner 42.2%, abstain 0.3%. Li
 | user_cf | +4.3 pp | +2.9 pp to +5.8 pp | +0.3 pp | -1.6 pp to +2.1 pp |
 | raw_success | +7.4 pp | +5.9 pp to +9.1 pp | +3.4 pp | +1.6 pp to +5.3 pp |
 | liftpath | +7.1 pp | +5.4 pp to +9.0 pp | +3.1 pp | +1.0 pp to +5.3 pp |
+
+### LiftPath minus each recommender (paired bootstrap)
+
+A range above zero means LiftPath has the higher follower lift.
+
+| recommender | all test points | 95% range | common subset | 95% range |
+|---|---|---|---|---|
+| random | +4.5 pp | +2.7 pp to +6.4 pp | +3.1 pp | +1.0 pp to +5.3 pp |
+| popular | +3.5 pp | +1.7 pp to +5.3 pp | +1.4 pp | -0.5 pp to +3.2 pp |
+| course_order | +3.1 pp | +1.7 pp to +4.7 pp | +1.0 pp | -0.4 pp to +2.5 pp |
+| user_cf | +4.2 pp | +2.6 pp to +6.1 pp | +2.8 pp | +0.7 pp to +4.9 pp |
+| raw_success | +2.5 pp | +1.2 pp to +4.2 pp | -0.3 pp | -1.8 pp to +1.4 pp |
 
 ## Gate 3
 
