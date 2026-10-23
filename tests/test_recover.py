@@ -95,3 +95,10 @@ def test_recovery_tables_levels(points):
     tables = recovery_tables(p.reset_index(), CANDIDATES, cfg)
     assert set(tables) == {0, 1}
     assert "module" in tables[0].columns and "module" not in tables[1].columns
+
+
+def test_points_sorted_by_key(points):
+    # The rescue shuffle permutes by row position, so the row order must be fixed.
+    _, p = points
+    keys = p.reset_index()[["course_id", "student_id", "assessment_id"]]
+    assert keys.equals(keys.sort_values(list(keys.columns), ignore_index=True))

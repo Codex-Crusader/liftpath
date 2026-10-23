@@ -59,7 +59,7 @@ The follower lift is positive for every group with 200 or more students, except 
 - One university, 2013 and 2014 data.
 - LiftPath compares several activities per state. Some winners can be chance results.
 - Routes use score transitions of past students. A route projection is not a forecast for one student.
-- The rescue map has 2 solid edges, and a shuffle test gives 2 or more in 23% of runs. The edges can be chance.
+- The rescue map has 2 solid edges, and a shuffle test gives 2 or more in 19% of runs. The edges can be chance.
 - The simulator win of the explore loop in the hidden confounder world depends on an upward bias of its experimental estimate.
 
 ## Ethics and privacy

@@ -100,7 +100,8 @@ def build_recovery_points(con: duckdb.DuckDBPyConnection, cfg: Config,
                "next_assessment_id", "score", "next_score", "due_day", "next_due_day",
                "low_band", "window_clicks", "effort_band",
                *[f"rev_{a}" for a in candidates], "goal_recover"]
-    return points[columns]
+    # The trigger query has no row order. Sort, so that runs give the same file.
+    return points[columns].sort_values(KEY, ignore_index=True)
 
 
 def recovery_tables(points: pd.DataFrame, candidates: list[str],

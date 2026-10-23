@@ -93,7 +93,7 @@ Kuzilek J., Hlosta M., Zdrahal Z. "Open University Learning Analytics dataset." 
 - Activity types are coarse. Some activities are not open every week.
 - The data comes from one university, in 2013 and 2014.
 - LiftPath compares several activities per state. Some winners can be chance results.
-- Rescue map: a shuffle test gives 2 or more solid edges in 23% of runs, so the 2 solid edges can be chance.
+- Rescue map: a shuffle test gives 2 or more solid edges in 19% of runs, so the 2 solid edges can be chance.
 - Simulator: the explore loop wins in the hidden confounder world only because its experimental estimate sits above the true effect.
 - Fairness: the lift is positive for every group with 200 or more students, except students with an unknown deprivation band (-0.9 pp, 95% range -3.2 to +1.7 pp).
 

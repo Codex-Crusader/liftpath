@@ -2,9 +2,9 @@
   "solid_edges": 2,
   "dashed_edges": 61,
   "null_runs": 100,
-  "null_mean": 0.95,
+  "null_mean": 0.91,
   "null_p95": 3.0,
-  "null_share_at_least_observed": 0.23,
+  "null_share_at_least_observed": 0.19,
   "keystones": {
     "CCC": "url",
     "DDD": null,

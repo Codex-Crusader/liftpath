@@ -77,7 +77,7 @@ A low score is a score below 40 on assessment k when assessment k + 1 exists. Th
 
 The rescue map uses the same data per assessment. An edge from an activity type to an assessment needs 20 or more students in both groups and a positive lift. The edge is solid if the range is above zero, else dashed. The keystone of a module is the type with the highest summed lift over solid edges.
 
-A shuffle test moves the goal values at random within each assessment and effort band, 100 times. 23% of these runs give 2 or more solid edges, as many as the real data. So the 2 solid edges can be chance.
+A shuffle test moves the goal values at random within each assessment and effort band, 100 times. 19% of these runs give 2 or more solid edges, as many as the real data. So the 2 solid edges can be chance.
 
 ## 7. Evaluation
 

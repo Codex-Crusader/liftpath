@@ -64,7 +64,7 @@ Message: After a low score, going back to earlier material can help, but the evi
 
 Figure: `reports/slides/rescue_map.png`
 
-Notes: In module CCC, external links before assessment 1 and section pages before assessment 3 have ranges above zero. A shuffle test gives 2 or more such edges in 23% of runs, so they can be chance. Four modules have no supported edge. The map is a question for course teams, not an answer.
+Notes: In module CCC, external links before assessment 1 and section pages before assessment 3 have ranges above zero. A shuffle test gives 2 or more such edges in 19% of runs, so they can be chance. Four modules have no supported edge. The map is a question for course teams, not an answer.
 
 ## Slide 9: Fairness and limits
 
