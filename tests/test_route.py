@@ -135,7 +135,10 @@ def test_items_ignore_outcomes(tmp_path):
     transitions = score_transitions(train, candidates, cfg)
     transitions_s = score_transitions(points_s[points_s["split"] == "train"], candidates, cfg)
     test = points[points["split"] == "test"].sample(20, random_state=cfg.seed)
+    with_items = 0
     for _, point in test.iterrows():
         a = plan_route(point, "goal_pass", tables, transitions, schedule, cfg)
         b = plan_route(point, "goal_pass", tables, transitions_s, schedule_s, cfg)
         assert [(s.action, s.items) for s in a.steps] == [(s.action, s.items) for s in b.steps]
+        with_items += any(s.items for s in a.steps)
+    assert with_items > 0

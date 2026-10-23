@@ -15,7 +15,7 @@ from liftpath.lift import (
 )
 from liftpath.paths import scope_dir
 from liftpath.recommend import State, label, recommend, recommend_points
-from liftpath.recover import RECOVERY_LEVELS, explain_recovery
+from liftpath.recover import RECOVERY_LEVELS, WEEK_DAYS, explain_recovery
 from liftpath.route import ITEM_NOTE, PROJECTION_NOTE, plan_route, rescue_card
 
 GOAL_NAMES = {"goal_pass": "pass", "goal_distinction": "distinction"}
@@ -94,10 +94,14 @@ def print_routes(test: pd.DataFrame, recovery: pd.DataFrame, folder, cfg) -> Non
     schedule = pd.read_parquet(folder / "plan" / "schedule.parquet")
     goal = "goal_pass"
     tables = read_tables(folder / "lifts", goal)
-    # Students with a rescue card come first, so the demo also shows one.
-    rescued = test.merge(
-        recovery.loc[recovery["status"] == RECOMMEND, ["course_id", "student_id"]]
-        .drop_duplicates(), on=["course_id", "student_id"])
+    # Points inside the window of a rescue recommendation come first, so the demo also
+    # shows a rescue card.
+    rescue = recovery.loc[recovery["status"] == RECOMMEND,
+                          ["course_id", "student_id", "due_day", "next_due_day"]]
+    rescued = test.merge(rescue, on=["course_id", "student_id"])
+    week_end = WEEK_DAYS * rescued["week"] + WEEK_DAYS - 1
+    rescued = rescued[(rescued["due_day"] <= week_end) & (week_end < rescued["next_due_day"])]
+    rescued = rescued.drop(columns=["due_day", "next_due_day"])
     pool = pd.concat([rescued.sample(frac=1, random_state=cfg.seed),
                       test.sample(ROUTE_TRIES, random_state=cfg.seed)]).head(ROUTE_TRIES)
     shown = 0
