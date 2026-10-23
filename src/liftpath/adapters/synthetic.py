@@ -14,6 +14,8 @@ from liftpath.config import Config
 from liftpath.schema import write_frames
 
 WEEK_DAYS = 7
+# The only action with a true effect on the outcome (outcome_quiz_effect).
+TRUE_EFFECT_ACTIONS = ("quiz",)
 
 
 @dataclass(frozen=True)

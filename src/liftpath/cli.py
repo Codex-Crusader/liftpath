@@ -15,6 +15,7 @@ from liftpath.db import connect
 from liftpath.lift import best_actions, lift_tables, resolve_points
 from liftpath.paths import RAW_DIR, REPORTS_DIR, canonical_dir, scope_dir
 from liftpath.recover import RECOVERY_LEVELS, build_recovery_points, recovery_tables
+from liftpath.report import run_eval
 from liftpath.scopes import build_sample
 from liftpath.states import (
     build_decision_points,
@@ -133,6 +134,18 @@ def step_recover(cfg: Config) -> None:
     print(f"goal_recover: test status shares {shares.round(3).to_dict()}")
 
 
+def step_eval(cfg: Config) -> None:
+    output = run_eval(cfg)
+    for goal, result in output["goals"].items():
+        for row in result["results"]:
+            print(f"{goal} {row['name']}: coverage {row['coverage']:.3f}, lift {row['lift']:+.4f}"
+                  f", net {row['net_lift']:+.4f} [{row['net_ci_low']:+.4f}, "
+                  f"{row['net_ci_high']:+.4f}]")
+    gate3 = output["gate3"]
+    print(f"Gate 3: coverage {gate3['coverage_not_abstain']:.3f}, "
+          f"{'PASS' if gate3['passes'] else 'FAIL'}")
+
+
 def not_built(cfg: Config) -> None:
     print("not built yet")
 
@@ -145,6 +158,7 @@ HANDLERS = {
     "states": step_states,
     "lifts": step_lifts,
     "recover": step_recover,
+    "eval": step_eval,
 }
 
 

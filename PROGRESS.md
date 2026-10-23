@@ -8,7 +8,7 @@
 | 2 | States | done |
 | 3 | Lift engine and synthetic data | done (Gate 2 test 2 fails) |
 | 4 | Recommend, recover, privacy | done |
-| 5 | Baselines, evaluation, fairness | not started |
+| 5 | Baselines, evaluation, fairness | done |
 | 6 | App | not started |
 | 7 | Docs | not started |
 | 8 | Planner (optional) | not started |
@@ -20,7 +20,7 @@
   - Test 2, ci_low(quiz) > 0: PASS. Pooled quiz lift 0.039 (95% range 0.015 to 0.063).
   - Test 2, lift(quiz) > lift(forumng): FAIL. Pooled forumng lift 0.063 (95% range 0.036 to 0.089). `tests/test_synthetic.py` marks it as a strict xfail.
   - The leakage test passes.
-- Gate 3 (coverage): not run.
+- Gate 3 (coverage): PASS on full data. LiftPath status is not abstain for 100.0% of test points (pass goal). The gate needs 50%. The recommend share (the share that gets an action) is 61.8%.
 
 ## Decisions and deviations
 - Phase 0: The build runs on Windows 11 with Git Bash, not on Arch Linux. Make targets use single `uv run` lines, so they work in sh and in cmd.
@@ -71,10 +71,29 @@
 - Phase 4: Full recovery points: 6,159 (3,892 train, 2,267 test), no repeated keys. Recovery rate (goal_recover): 0.497. Test status shares: recommend 0.862, no_clear_winner 0.138.
 - Phase 4: The recovery effort rank population is the triggered points (score below low_score, a next assessment exists) with window clicks > 0, within (course_id, assessment_id). SPEC section 13 does not say whose clicks form the ranking.
 - Phase 4: Two of the three demo cards recommend the discussion forum. This agrees with the Phase 3 method issue: tertile effort control can rate effort-driven actions too high.
+- Phase 5: popular backs off to the next level when a cell has fewer than min_count train points. course_order gives None for a (module, week) with no train points. SPEC section 14 does not say either.
+- Phase 5: raw_success scores a candidate only if n1 >= min_count. If only one candidate qualifies in a cell, it wins, also with a low success rate.
+- Phase 5: user_cf: a cum_share vector of zeros has cosine similarity 0 with every train point. Ties among neighbors follow numpy argpartition order. Test rows go in chunks of 2,000.
+- Phase 5: Every recommender uses the same bootstrap draws (students drawn with replacement over all test students, n_boot runs, seed from config). Net lift gets a paired percentile range from the per-run differences (R minus random). The range uses the coverage that z gives (z = 1.96 gives 95%).
+- Phase 5: `make eval` builds the LiftPath tables from train points. It does not read the tables on disk.
+- Phase 5: Fairness joins demographics from enrollments. A NULL imd_band is the group "unknown". The small-sample flag counts unique students (n < 200). `fairness.SMALL_SAMPLE_STUDENTS = 200` comes from SPEC section 17.
+- Phase 5: Report names: the full scope writes `reports/eval.md`, `eval_results.json`, `fairness.md` and `figures/eval_lift.png`, `figures/fairness.png`. Other scopes add `_<scope>`. The synthetic run also writes `figures/synthetic_truth.png` and a ground truth table.
+- Phase 5: Figure colors: LiftPath is blue (#2a78d6) and raw_success is orange (#eb6834) in every figure. The pair passed the dataviz palette validator (light mode).
+- Phase 5: `make eval` takes 38 s on full data and 10 s on synthetic data.
+- Phase 5 results, full data, net lift (minus random) with 95% range:
+  - Pass: LiftPath +2.9 pp (+2.2 to +3.6). raw_success +1.9 pp (+1.3 to +2.6). course_order +1.8 pp (+1.1 to +2.6). On the common subset: LiftPath +3.0 pp (+2.3 to +3.7), raw_success +2.7 pp (+1.7 to +3.6). The ranges overlap.
+  - Distinction: LiftPath +5.9 pp (+4.6 to +7.0). raw_success +3.0 pp (+2.1 to +4.3). On the common subset: LiftPath +5.9 pp (+4.6 to +7.1), raw_success +4.0 pp (+2.7 to +5.7).
+  - LiftPath status shares (pass): recommend 61.8%, no_clear_winner 38.2%, abstain 0.0%.
+- Phase 5 results, synthetic data:
+  - Ground truth (pass goal, test points): quiz share of recommendations: LiftPath 63.0%, raw_success 21.1%, random 12.2%, popular 60.8%, course_order 82.2%, user_cf 19.9%. forumng share: LiftPath 0.0%, raw_success 43.5%.
+  - course_order and popular pick quiz often because quiz is a common activity in the generator, not because they measure its effect.
+  - Net lift (pass): LiftPath +2.0 pp (-0.2 to +4.3), raw_success +2.3 pp, course_order +2.7 pp. Follower lift ranks raw_success above LiftPath here, although raw_success sends 43.5% of its picks to forumng, which has no effect. Follower lift uses the same effort bands as LiftPath and can reward effort-driven picks. Present the ground truth table next to follower lift.
+- Phase 5 fairness (full, pass): follower lift is positive in every group with 200 or more students except imd_band "unknown" (-0.9 pp, range -3.2 to +1.7). age_band 55<= has 91 students (small sample).
 
 ## Blocked
 - None.
 
 ## Method issues
 - Phase 3: Next-week effort control in tertiles leaves confounding for an action that rises with effort. On synthetic data, forumng has no true effect, but its pooled lift (0.063) is above the quiz lift (0.039). Inside a tertile, forum use still rises with clicks, and clicks rise with ability. Diagnostics with a ceil(pct * bins) rule show finer bins reduce the forumng lift but do not remove it: 5 bins give quiz 0.030 and forumng 0.040, and 10 bins give quiz 0.031 and forumng 0.034. A probe on level 0 cells (current effort and score band in the cell) gave quiz 0.041 and forumng 0.032, but it has no interval and is not a gate result. The user chose to keep SPEC sections 7 and 10. Phase 5 net lift and the synthetic truth figure must show this result.
+- Phase 5 (check before the phase): The shipped method uses level 0 cells, and it finds the true effect on synthetic data. This is a diagnostic, not a gate result. The level 0 lift tables (train points, cells with min(n_did, n_did_not) >= min_count) give a w-weighted mean lift of 0.042 for quiz (ci_low 0.026) and 0.033 for forumng. The combined se assumes independent cells, but the cells share students. On synthetic test points, LiftPath recommends quiz in 63% of its recommendations, url in 29%, glossary in 8% and forumng in 0%. The url and glossary picks are the SPEC section 20 limitation "Some winners can be chance results". The method stays as SPEC defines it.
 - Phase 4: The SPEC section 12 template says "Based on {n_did} and {n_did_not} students", but n_did and n_did_not count decision points (student-weeks). At level 1 and 2 they also add up across weeks. The text keeps the SPEC wording for now. Phase 6 and 7 must fix the wording or show unique students (u1 and u0, which the estimator already computes), with the user's agreement.
