@@ -29,6 +29,7 @@ from liftpath.lift import (
     resolve_points,
 )
 from liftpath.paths import REPORTS_DIR, canonical_dir, scope_dir
+from liftpath.trap import TRAP_METHODS, disagreement
 
 GOALS = {"goal_pass": "pass", "goal_distinction": "distinction"}
 PRIMARY = "goal_pass"
@@ -137,8 +138,12 @@ def run_eval(cfg: Config) -> dict:
         status = resolve_points(test, best_actions(tables, cfg))["status"]
         shares = {s: float((status == s).mean()) for s in (RECOMMEND, NO_CLEAR_WINNER, ABSTAIN)}
         common_n = int(results["common_n_points"].iloc[0])
+        common = pd.concat(actions, axis=1).notna().all(axis=1)
+        disagree = {m: disagreement(actions["liftpath"][common], actions[m][common])
+                    for m in TRAP_METHODS}
         output["goals"][goal] = {"results": results.to_dict("records"),
-                                 "liftpath_status_shares": shares, "common_n_points": common_n}
+                                 "liftpath_status_shares": shares, "common_n_points": common_n,
+                                 "disagreement": disagree}
         md += [f"## Goal: {goal_name}", "", results_table(results), "",
                f"LiftPath status shares: recommend {shares[RECOMMEND]:.1%}, no_clear_winner "
                f"{shares[NO_CLEAR_WINNER]:.1%}, abstain {shares[ABSTAIN]:.1%}. LiftPath gives an "
@@ -147,7 +152,11 @@ def run_eval(cfg: Config) -> dict:
                "action)", "", common_table(results), "",
                "### LiftPath minus each recommender (paired bootstrap)", "",
                "A range above zero means LiftPath has the higher follower lift.", "",
-               reference_table(results), ""]
+               reference_table(results), "",
+               "### Disagreement on the common subset", "",
+               f"LiftPath and user_cf give different actions at {disagree['user_cf']:.1%} of the "
+               f"common test points. LiftPath and raw_success differ at "
+               f"{disagree['raw_success']:.1%}.", ""]
 
         if goal == PRIMARY:
             eval_lift_figure(results, goal_name, figures / f"eval_lift{suffix(cfg)}.png")

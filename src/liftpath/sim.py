@@ -31,13 +31,11 @@ from liftpath.baselines import (
 from liftpath.config import Config
 from liftpath.evaluate import interval, student_draws
 from liftpath.lift import (
-    LEVELS,
     NONE_BAND,
     STUDENT_KEY,
-    best_actions,
     estimate_lifts,
     lift_tables,
-    resolve_points,
+    point_lifts,
 )
 from liftpath.states import add_week_block, effort_bands, score_bands
 
@@ -297,21 +295,9 @@ def candidate_scores(points: pd.DataFrame, tables: dict[int, pd.DataFrame],
     The observational lift comes from the level that resolve_points picks for the point,
     with the SPEC 11 support rule. An available experimental effect replaces it.
     """
-    level = resolve_points(points, best_actions(tables, cfg))["level"]
     grid = pd.DataFrame({"row": np.repeat(np.arange(len(points)), len(candidates)),
                          "action": np.tile(candidates, len(points))})
-    parts = []
-    for lv, cells in LEVELS.items():
-        rows = np.flatnonzero(level.to_numpy() == lv)
-        if len(rows) == 0:
-            continue
-        table = tables[lv]
-        table = table[table[["n_did", "n_did_not"]].min(axis=1) >= cfg.min_count]
-        sub = points.iloc[rows][cells].assign(row=rows)
-        parts.append(sub.merge(table, on=cells)[["row", "action", "lift", "ci_low",
-                                                 "ci_high"]])
-    obs = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(
-        columns=["row", "action", "lift", "ci_low", "ci_high"])
+    obs = point_lifts(points, tables, cfg)[["row", "action", "lift", "ci_low", "ci_high"]]
     scores = grid.merge(obs.rename(columns={"lift": "score"}), on=["row", "action"],
                         how="left")
     exp = experimental[experimental["available"].astype(bool)].set_index("action")

@@ -168,3 +168,24 @@ def read_tables(folder: Path, prefix: str) -> dict[int, pd.DataFrame]:
     """Read tables written as <prefix>_level<L>.parquet, keyed by level."""
     paths = sorted(folder.glob(f"{prefix}_level*.parquet"))
     return {int(p.stem.removeprefix(f"{prefix}_level")): pd.read_parquet(p) for p in paths}
+
+
+def point_lifts(points: pd.DataFrame, tables: dict[int, pd.DataFrame], cfg: Config,
+                levels: dict[int, list[str]] = LEVELS) -> pd.DataFrame:
+    """The lift row of every supported candidate at the level resolve_points picks.
+
+    Columns: row (position in points), action and ESTIMATE_COLS. An abstain point has no rows.
+    """
+    level = resolve_points(points, best_actions(tables, cfg, levels), levels)["level"]
+    level = level.fillna(-1).to_numpy(int)
+    parts = []
+    for lv, cells in levels.items():
+        rows = np.flatnonzero(level == lv)
+        if len(rows) == 0:
+            continue
+        table = tables[lv]
+        table = table[np.minimum(table["n_did"], table["n_did_not"]) >= cfg.min_count]
+        sub = points.iloc[rows][cells].assign(row=rows)
+        parts.append(sub.merge(table, on=cells)[["row", "action", *ESTIMATE_COLS]])
+    columns = ["row", "action", *ESTIMATE_COLS]
+    return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=columns)

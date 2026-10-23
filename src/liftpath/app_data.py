@@ -23,6 +23,7 @@ from liftpath.lift import (
 )
 from liftpath.privacy import suppress_counts
 from liftpath.recover import RECOVERY_LEVELS, recovery_tables
+from liftpath.trap import TRAP_COLS, TRAP_METHODS, trap_columns
 
 GOALS = ("goal_pass", "goal_distinction")
 STATE_COLS = ["course_id", "module", "presentation", "student_id", "week", "week_block",
@@ -40,12 +41,12 @@ def write(df: pd.DataFrame, path: Path) -> None:
 
 
 def sample_students(test: pd.DataFrame, cfg: Config) -> pd.DataFrame:
-    """Up to app_students_per_course test students per course_id, seeded."""
+    """Up to app_students_per_course test students per course_id, seeded. All columns."""
     keys = test[STUDENT_KEY].drop_duplicates()
     rng = np.random.default_rng(cfg.seed)
     keys = keys.assign(_order=rng.random(len(keys))).sort_values("_order")
     chosen = keys.groupby("course_id").head(cfg.app_students_per_course)[STUDENT_KEY]
-    return test.merge(chosen, on=STUDENT_KEY)[STATE_COLS]
+    return test.merge(chosen, on=STUDENT_KEY)
 
 
 def audit_table(train: pd.DataFrame, candidates: list[str], goal: str, cfg: Config):
@@ -80,7 +81,9 @@ def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
     (out_dir / "figures").mkdir(parents=True)
     train, test = points[points["split"] == "train"], points[points["split"] == "test"]
 
-    students = sample_students(test, cfg)
+    # The baselines need the full state rows. The app file keeps only STATE_COLS.
+    sample = sample_students(test, cfg)
+    students = sample[STATE_COLS].copy()
     for goal in GOALS:
         tables = lift_tables(train, candidates, goal, cfg)
         best = best_actions(tables, cfg)
@@ -88,6 +91,10 @@ def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
         students[f"{goal}_status"] = resolved["status"]
         students[f"{goal}_action"] = resolved["action"]
         students[f"{goal}_level"] = resolved["level"]
+        trap = trap_columns(sample, train, candidates, tables, goal, cfg)
+        for method in TRAP_METHODS:
+            for col in TRAP_COLS:
+                students[f"{goal}_{method}_{col}"] = trap[f"{method}_{col}"]
         for level, table in tables.items():
             write(suppress_counts(table, LIFT_COUNTS, cfg),
                   out_dir / f"{goal}_level{level}.parquet")

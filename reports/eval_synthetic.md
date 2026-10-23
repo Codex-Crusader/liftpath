@@ -44,6 +44,10 @@ A range above zero means LiftPath has the higher follower lift.
 | user_cf | +1.1 pp | -0.8 pp to +3.0 pp | +0.2 pp | -2.1 pp to +2.3 pp |
 | raw_success | -0.3 pp | -2.4 pp to +1.6 pp | -1.4 pp | -3.8 pp to +0.3 pp |
 
+### Disagreement on the common subset
+
+LiftPath and user_cf give different actions at 83.2% of the common test points. LiftPath and raw_success differ at 55.5%.
+
 ## Ground truth (synthetic data)
 
 In the synthetic data, only quiz has a true effect on passing. forumng use rises with effort, but it has no effect. This table does not depend on follower lift.
@@ -94,6 +98,10 @@ A range above zero means LiftPath has the higher follower lift.
 | course_order | +3.1 pp | +1.7 pp to +4.7 pp | +1.0 pp | -0.4 pp to +2.5 pp |
 | user_cf | +4.2 pp | +2.6 pp to +6.1 pp | +2.8 pp | +0.7 pp to +4.9 pp |
 | raw_success | +2.5 pp | +1.2 pp to +4.2 pp | -0.3 pp | -1.8 pp to +1.4 pp |
+
+### Disagreement on the common subset
+
+LiftPath and user_cf give different actions at 85.5% of the common test points. LiftPath and raw_success differ at 47.7%.
 
 ## Gate 3
 

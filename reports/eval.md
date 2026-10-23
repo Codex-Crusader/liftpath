@@ -44,6 +44,10 @@ A range above zero means LiftPath has the higher follower lift.
 | user_cf | +2.8 pp | +1.9 pp to +3.7 pp | +2.9 pp | +2.1 pp to +3.8 pp |
 | raw_success | +1.0 pp | +0.5 pp to +1.7 pp | +0.3 pp | -0.5 pp to +1.2 pp |
 
+### Disagreement on the common subset
+
+LiftPath and user_cf give different actions at 76.2% of the common test points. LiftPath and raw_success differ at 65.6%.
+
 ## Goal: distinction
 
 | recommender | coverage | follower lift | 95% range | net lift | 95% range |
@@ -79,6 +83,10 @@ A range above zero means LiftPath has the higher follower lift.
 | course_order | +4.2 pp | +2.7 pp to +5.4 pp | +4.2 pp | +2.8 pp to +5.5 pp |
 | user_cf | +4.9 pp | +3.7 pp to +5.9 pp | +4.4 pp | +3.2 pp to +5.5 pp |
 | raw_success | +2.8 pp | +1.9 pp to +3.7 pp | +1.9 pp | +0.9 pp to +2.6 pp |
+
+### Disagreement on the common subset
+
+LiftPath and user_cf give different actions at 78.7% of the common test points. LiftPath and raw_success differ at 52.1%.
 
 ## Gate 3
 

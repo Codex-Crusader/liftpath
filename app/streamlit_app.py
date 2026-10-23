@@ -15,6 +15,7 @@ from liftpath.lift import ABSTAIN, LEVELS, NO_CLEAR_WINNER, RECOMMEND
 from liftpath.recommend import State, label, recommend, show_count, situation
 from liftpath.recover import explain_recovery
 from liftpath.style import BLUE, GRID, MUTED
+from liftpath.trap import trap_lines
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_DIR = os.environ.get("APP_DATA_DIR", str(ROOT / "data" / "app"))
@@ -131,6 +132,11 @@ def student_tab(meta: dict, cfg) -> None:
     st.write(rec.rationale)
     st.caption(f"Student state: {situation(state, 0).strip('()')}. "
                f"Course {row['course_id']}, week {week}.")
+    lines = trap_lines(row, goal, action if rec.status == RECOMMEND else None)
+    if lines:
+        st.markdown("**What common advice says**")
+        for line in lines:
+            st.write(line)
 
     level = row[f"{goal}_level"]
     level = 0 if pd.isna(level) else int(level)

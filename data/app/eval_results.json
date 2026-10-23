@@ -172,7 +172,11 @@
         "no_clear_winner": 0.38212989589136376,
         "abstain": 0.0
       },
-      "common_n_points": 187992
+      "common_n_points": 187992,
+      "disagreement": {
+        "user_cf": 0.762282437550534,
+        "raw_success": 0.6564694242308183
+      }
     },
     "goal_distinction": {
       "results": [
@@ -332,7 +336,11 @@
         "no_clear_winner": 0.45684144766713575,
         "abstain": 0.0
       },
-      "common_n_points": 167438
+      "common_n_points": 167438,
+      "disagreement": {
+        "user_cf": 0.7872764844300577,
+        "raw_success": 0.5206822823970664
+      }
     }
   },
   "gate3": {
