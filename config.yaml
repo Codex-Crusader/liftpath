@@ -33,3 +33,6 @@ rescue_min_count: 20
 rescue_null_runs: 100
 live_db_path: data/live/live.db
 trap_disagree_min: 0.30
+teacher_inactive_weeks: 2
+teacher_inactive_weeks_max: 8
+teacher_settings_path: data/live/teacher_settings.json

@@ -41,6 +41,8 @@ from liftpath.rescue import SOLID, build_graph, keystone, rescue_figure, rescue_
 from liftpath.route import ITEM_NOTE, KEEP_LABEL, PROJECTION_NOTE, plan_route, rescue_card
 from liftpath.sim import POLICIES
 from liftpath.style import BLUE, GRID, MUTED
+from liftpath.teacher import prefs_path
+from liftpath.teacher_ui import TeacherContext, settings_tab, teacher_tab
 from liftpath.trap import trap_lines
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -55,7 +57,8 @@ FINAL_RESULTS = ("Pass", "Distinction", "Fail", "Withdrawn")
 PITCH = "Not what students like you did. What helped students like you."
 DEMO_BANNER = ("Demo mode. Data resets on restart. The simulator shows how the loop learns "
                "at scale.")
-TABS = ["Your route", "Simulator", "Try it", "Rescue map", "Evidence"]
+TABS = ["Teacher view", "Your route", "Simulator", "Try it", "Rescue map", "Evidence",
+        "Settings"]
 
 
 @st.cache_data
@@ -157,9 +160,13 @@ def candidate_rows(goal: str, state: State, level: int) -> pd.DataFrame:
     return table[mask]
 
 
-def header(meta: dict) -> None:
+def header() -> None:
     st.title("LiftPath")
     st.caption(PITCH)
+
+
+def headline_metrics() -> None:
+    """The judge metrics. They open the Evidence tab, so the teacher view stays simple."""
     if HEADLINE_FILE.exists():
         metrics = json.loads(HEADLINE_FILE.read_text(encoding="utf-8")).get("metrics", [])
         items = [(m["label"], m["value"], m.get("help")) for m in metrics]
@@ -578,6 +585,7 @@ def fairness_section(cfg) -> None:
 
 
 def evidence_tab(cfg) -> None:
+    headline_metrics()
     st.subheader("Real-data evaluation")
     eval_section(cfg)
     st.subheader("Fairness")
@@ -592,6 +600,15 @@ def evidence_tab(cfg) -> None:
         st.image(str(truth), width="stretch")
 
 
+def teacher_context(meta: dict, cfg) -> TeacherContext:
+    """The teacher view uses the same lift tables as the route (live after a refresh)."""
+    return TeacherContext(
+        students=load_table(APP_DIR, "students.parquet"),
+        recovery=load_table(APP_DIR, "recovery_points.parquet"),
+        tables_for=lift_tables, plan=plan_data(APP_DIR), cfg=cfg,
+        settings_file=prefs_path(cfg, live_dir()), candidates=list(meta["candidates"]))
+
+
 def main() -> None:
     st.set_page_config(page_title="LiftPath", layout="wide")
     meta = load_json(APP_DIR, "meta.json")
@@ -600,18 +617,24 @@ def main() -> None:
         st.error(f"No app data in {APP_DIR}. Run `make app-data`.")
         return
     cfg = app_config(meta)
-    header(meta)
+    header()
+    teacher = teacher_context(meta, cfg)
     tabs = st.tabs(TABS)
     with tabs[0]:
-        route_tab(cfg)
+        teacher_tab(teacher)
     with tabs[1]:
-        simulator_tab()
+        st.caption("The tabs from here to Evidence show how LiftPath finds each suggestion.")
+        route_tab(cfg)
     with tabs[2]:
-        try_it_tab(meta, cfg)
+        simulator_tab()
     with tabs[3]:
-        rescue_tab(meta, cfg)
+        try_it_tab(meta, cfg)
     with tabs[4]:
+        rescue_tab(meta, cfg)
+    with tabs[5]:
         evidence_tab(cfg)
+    with tabs[6]:
+        settings_tab(teacher)
     st.caption(f"Data: Open University Learning Analytics Dataset (OULAD), CC BY 4.0. "
                f"Scope: {meta['scope']}. The data is observational: lift is evidence, not proof "
                "of cause. LiftPath supports decisions. It does not make them.")

@@ -29,3 +29,19 @@ METHOD_COLORS = {
     "course_order": VIOLET,
     "none": MUTED,
 }
+
+# Teacher view status colors. They mark facts about a student, not methods, and always come
+# with a text label.
+STATUS_COLORS = {
+    "go_back": "#b3361f",
+    "no_activity": "#9a6400",
+    "next_step": BLUE,
+    "no_change": "#6b6a65",
+}
+STATUS_TINTS = {
+    "go_back": "#fbeae6",
+    "no_activity": "#fbf1dc",
+    "next_step": "#e7f0fb",
+    "no_change": "#f0efeb",
+}
+BORDER = "#e1e0d9"

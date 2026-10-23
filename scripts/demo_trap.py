@@ -66,7 +66,8 @@ def show(row: pd.Series) -> list[str]:
     at.run()
     at.selectbox(key="route_week").set_value(row["week"]).run()
     assert not at.exception
-    texts = [m.value for m in at.tabs[0].markdown]
+    route = next(t for t in at.tabs if t.label == "Your route")
+    texts = [m.value for m in route.markdown]
     first_step = texts[texts.index(f"**Week {row['week']}**") + 1]
     return [f"Route week {row['week']}: {first_step}",
             *[t for t in texts if t.startswith(TRAP_STARTS)]]

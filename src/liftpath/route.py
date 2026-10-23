@@ -376,6 +376,23 @@ def plan_route(student_point: pd.Series, goal: str, tables: dict[int, pd.DataFra
         effort=plan, goal=goal, stop_reason=stop_reason)
 
 
+def rescue_rows(points: pd.DataFrame, recovery: pd.DataFrame, cfg: Config) -> pd.DataFrame:
+    """The recovery row behind the rescue card of each point, if there is one.
+
+    points: course_id, student_id and week. The row is the latest low score whose window
+    holds the end of the week (due_day <= week_end < next_due_day), with status recommend.
+    Returns the recovery columns plus week, one row per point that has a card.
+    """
+    keys = points[["course_id", "student_id", "week"]].drop_duplicates()
+    rows = keys.merge(recovery, on=["course_id", "student_id"])
+    week_end = WEEK_DAYS * rows["week"] + WEEK_DAYS - 1
+    rows = rows[(rows["due_day"] <= week_end) & (rows["next_due_day"] > week_end)
+                & (rows["score"] < cfg.low_score) & (rows["status"] == RECOMMEND)]
+    rows = rows.sort_values("due_day").drop_duplicates(
+        ["course_id", "student_id", "week"], keep="last")
+    return rows.reset_index(drop=True)
+
+
 def rescue_card(student_point: pd.Series, recovery: pd.DataFrame, schedule: pd.DataFrame,
                 cfg: Config) -> RescueCard | None:
     """The recovery card for the student's latest low score, if it is a recommendation.
@@ -383,14 +400,11 @@ def rescue_card(student_point: pd.Series, recovery: pd.DataFrame, schedule: pd.D
     recovery: recovery points with the resolved status, action and estimate columns.
     The latest score is the assessment whose window holds the end of the student's week.
     """
-    week_end = WEEK_DAYS * int(student_point["week"]) + WEEK_DAYS - 1
-    rows = recovery[(recovery["course_id"] == student_point["course_id"])
-                    & (recovery["student_id"] == student_point["student_id"])
-                    & (recovery["due_day"] <= week_end) & (recovery["next_due_day"] > week_end)]
-    rows = rows[(rows["score"] < cfg.low_score) & (rows["status"] == RECOMMEND)]
+    point = pd.DataFrame([{k: student_point[k] for k in ("course_id", "student_id", "week")}])
+    rows = rescue_rows(point, recovery, cfg)
     if rows.empty:
         return None
-    row = rows.sort_values("due_day").iloc[-1]
+    row = rows.iloc[0]
     old = schedule[(schedule["course_id"] == row["course_id"])
                    & (schedule["action"] == row["action"])
                    & (schedule["active_day"] < row["due_day"])]

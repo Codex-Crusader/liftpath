@@ -31,4 +31,4 @@ def test_demo_script_length():
     spoken = re.findall(r'^Say: "(.+)"$', text, flags=re.MULTILINE)
     assert spoken
     assert sum(len(s.split()) for s in spoken) <= MAX_SPOKEN_WORDS
-    assert text.index("Your route") < text.index("Simulator")
+    assert text.index("Teacher view") < text.index("Your route") < text.index("Simulator")

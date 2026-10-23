@@ -30,7 +30,8 @@ from liftpath.states import build_decision_points, register_canonical, select_ca
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS = ROOT / "reports"
 APP = str(ROOT / "app" / "streamlit_app.py")
-TABS = ["Your route", "Simulator", "Try it", "Rescue map", "Evidence"]
+TABS = ["Teacher view", "Your route", "Simulator", "Try it", "Rescue map", "Evidence",
+        "Settings"]
 TIMEOUT_S = 180
 NULL_RUNS = 5
 
@@ -116,6 +117,31 @@ def texts(element) -> list[str]:
     return [str(e.value) for e in [*element.markdown, *element.caption, *element.subheader]]
 
 
+def test_teacher_tab(app):
+    found = tab(app, "Teacher view")
+    assert any("LiftPath does not predict results" in t for t in texts(found))
+    app.button_group(key="teacher_goal").set_value("goal_distinction").run()
+    assert not app.exception
+    box = app.selectbox(key="teacher_student")
+    group = box.options[-1].split("·")[-1].strip()  # the option reads "id · group"
+    box.select_index(len(box.options) - 1).run()
+    assert not app.exception
+    badges = [t for t in texts(tab(app, "Teacher view")) if t.startswith('<span class="lp-name">')]
+    assert badges and group in badges[0]
+    assert len(tab(app, "Teacher view").code) == 1  # the student message
+
+
+def test_settings_tab(app):
+    tab(app, "Settings")
+    app.text_area(key="set_template").set_value("Hi $student. $suggestion See you.")
+    app.toggle(key="set_numbers").set_value(True)
+    next(b for b in app.button if b.label == "Save settings").click().run()
+    assert not app.exception
+    assert app.success and app.success[0].value.startswith("Saved.")
+    message = tab(app, "Teacher view").code[0].value
+    assert message.startswith("Hi ") and message.endswith("See you.")
+
+
 def test_route_tab(app):
     tab(app, "Your route")
     app.radio(key="route_effort").set_value("high").run()
@@ -188,6 +214,12 @@ def test_demo_script_clicks(monkeypatch, tmp_path):
     monkeypatch.setenv("LIVE_DATA_DIR", str(tmp_path / "live"))
     at = AppTest.from_file(APP, default_timeout=TIMEOUT_S)
     at.run()
+    teacher = texts(tab(at, "Teacher view"))
+    assert at.selectbox(key="teacher_course").value == "FFF_2014J"
+    assert at.selectbox(key="teacher_week_FFF_2014J").value == 19
+    assert any('class="big">100<span> of 104</span>' in t for t in teacher)
+    assert at.selectbox(key="teacher_student").value == 582266
+    assert at.code[0].value.count("go back to the earlier quizzes") == 1
     at.selectbox(key="route_module").set_value("GGG").run()
     at.selectbox(key="route_student").set_value("388259 (GGG_2014J)").run()
     at.selectbox(key="route_week").set_value(31).run()

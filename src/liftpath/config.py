@@ -46,6 +46,9 @@ class Config:
     rescue_null_runs: int
     live_db_path: str
     trap_disagree_min: float
+    teacher_inactive_weeks: int
+    teacher_inactive_weeks_max: int
+    teacher_settings_path: str
     scope: str  # data_scope after the DATA_SCOPE override
 
 
