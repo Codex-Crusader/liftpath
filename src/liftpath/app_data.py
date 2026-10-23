@@ -119,6 +119,9 @@ def build_app_data(cfg: Config, points: pd.DataFrame, candidates: list[str],
     if rescue_dir is not None and (rescue_dir / "edges.parquet").exists():
         edges = pd.read_parquet(rescue_dir / "edges.parquet")
         write(suppress_counts(edges, LIFT_COUNTS, cfg), out_dir / "rescue_edges.parquet")
+        strongest = pd.read_parquet(rescue_dir / "strongest.parquet")
+        write(suppress_counts(strongest, LIFT_COUNTS, cfg),
+              out_dir / "rescue_strongest.parquet")
         items = pd.read_parquet(rescue_dir / "items.parquet")
         write(suppress_counts(items, ["n_students"], cfg), out_dir / "rescue_items.parquet")
         shutil.copy2(rescue_dir / "meta.json", out_dir / "rescue_meta.json")

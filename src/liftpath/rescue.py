@@ -20,6 +20,7 @@ SOLID = "solid"
 DASHED = "dashed"
 CELL = ["module", "assessment_id"]
 ITEMS_PER_EDGE = 3
+STRONGEST_PER_LINE = 4
 EDGE_COLS = ["module", "course_id", "assessment_id", "due_day", "action", "lift", "ci_low",
              "ci_high", "n_did", "n_did_not", "style"]
 
@@ -148,6 +149,11 @@ def assessment_labels(edges: pd.DataFrame) -> pd.DataFrame:
     rows = rows.sort_values(["course_id", "due_day", "assessment_id"])
     rows["number"] = rows.groupby("course_id").cumcount() + 1
     rows["presentation"] = rows["course_id"].str.split("_").str[-1]
+    best = strongest_edges(edges).set_index("assessment_id")
+    lift = rows["assessment_id"].map(best["lift"])
+    unclear = np.where(rows["assessment_id"].map(best["style"]) == DASHED, " (not clear)", "")
+    rows["text"] = [f"#{n} {a} {v:+.0%}{u}" for n, a, v, u in zip(
+        rows["number"], rows["assessment_id"].map(best["action"]), lift, unclear, strict=True)]
     return rows
 
 
@@ -174,6 +180,7 @@ def rescue_figure(edges: pd.DataFrame, module: str, note: str) -> go.Figure:
     span = max(labels["due_day"].max() - labels["due_day"].min(), WEEK_DAYS)
     left = labels["due_day"].min() - 0.35 * span
     where = labels.set_index("assessment_id")
+    n_lines = sum(-(-n // STRONGEST_PER_LINE) for n in labels.groupby("presentation").size())
 
     fig = go.Figure()
     for row in edges.sort_values("style").itertuples():
@@ -203,14 +210,22 @@ def rescue_figure(edges: pd.DataFrame, module: str, note: str) -> go.Figure:
     fig.update_layout(
         title={"text": f"Rescue map, {module}: activity after a low score", "x": 0.01},
         paper_bgcolor=SURFACE, plot_bgcolor=SURFACE, font={"color": TEXT},
-        height=260 + 50 * (len(types) + len(presentations)), width=980,
-        margin={"l": 40, "r": 40, "t": 60, "b": 150},
+        height=340 + 16 * n_lines + 50 * (len(types) + len(presentations)), width=980,
+        margin={"l": 40, "r": 40, "t": 60, "b": 230 + 16 * n_lines},
         xaxis={"title": "due day of the assessment (course day)", "gridcolor": GRID,
                "zeroline": False,
                "tickvals": list(range(0, int(labels["due_day"].max()) + 1, 50)),
                "range": [left - 0.32 * span, labels["due_day"].max() + 0.14 * span]},
         yaxis={"visible": False, "range": [-1, max(row_y.values()) + 1]})
+    # The strongest edge per assessment, as a list under the chart (labels on the
+    # timeline collide when due days are close).
+    strongest = ["Strongest edge per assessment:"]
+    for p, rows in labels.groupby("presentation"):
+        texts = rows["text"].tolist()
+        for i in range(0, len(texts), STRONGEST_PER_LINE):
+            strongest.append(f"{p}: " + ", ".join(texts[i:i + STRONGEST_PER_LINE]))
     fig.add_annotation(x=0, y=0, yshift=-80, xref="paper", yref="paper", xanchor="left",
                        yanchor="top", showarrow=False, align="left",
-                       font={"size": 11, "color": TEXT_SECONDARY}, text=note)
+                       font={"size": 11, "color": TEXT_SECONDARY},
+                       text="<br>".join(strongest) + "<br><br>" + note)
     return fig

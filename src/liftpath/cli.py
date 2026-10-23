@@ -28,7 +28,7 @@ from liftpath.paths import (
     scope_dir,
 )
 from liftpath.recover import RECOVERY_LEVELS, build_recovery_points, recovery_tables
-from liftpath.report import run_eval
+from liftpath.report import run_eval, suffix
 from liftpath.rescue import (
     DASHED,
     SOLID,
@@ -39,6 +39,7 @@ from liftpath.rescue import (
     rescue_figure,
     rescue_items,
     rescue_note,
+    strongest_edges,
 )
 from liftpath.route import item_schedule, score_transitions
 from liftpath.scopes import build_sample
@@ -235,15 +236,21 @@ def step_rescue(cfg: Config) -> None:
     out.mkdir(exist_ok=True)
     edges.to_parquet(out / "edges.parquet", index=False)
     items.to_parquet(out / "items.parquet", index=False)
+    strongest_edges(edges).to_parquet(out / "strongest.parquet", index=False)
     note = rescue_note(meta)
     figures = REPORTS_DIR / "figures"
+    tag = suffix(cfg)
+    # A module that lost its solid edge must not keep an old map.
+    for old in figures.glob(f"rescue_*{tag}.png"):
+        if tag or old.stem.count("_") == 1:
+            old.unlink()
     for module in sorted(edges["module"].unique()):
         found = keystone(build_graph(edges[edges["module"] == module]))
         meta["keystones"][module] = found
         # A figure only for modules with a solid edge. Dashed-only maps show nothing clear.
         if found is not None:
-            rescue_figure(edges, module, note).write_image(figures / f"rescue_{module}.png",
-                                                           scale=2)
+            rescue_figure(edges, module, note).write_image(
+                figures / f"rescue_{module}{tag}.png", scale=2)
     (out / "meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
     print(f"edges by module and style: {edges.groupby(['module', 'style']).size().to_dict()}")
     print(f"items: {len(items)}. meta: {meta}")
