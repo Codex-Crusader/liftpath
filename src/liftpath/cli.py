@@ -10,10 +10,11 @@ import pandas as pd
 
 from liftpath.adapters.oulad import build_canonical
 from liftpath.adapters.synthetic import write_synthetic
+from liftpath.app_data import FIGURES, build_app_data
 from liftpath.config import Config, load_config
 from liftpath.db import connect
 from liftpath.lift import best_actions, lift_tables, resolve_points
-from liftpath.paths import RAW_DIR, REPORTS_DIR, canonical_dir, scope_dir
+from liftpath.paths import APP_DIR, RAW_DIR, REPORTS_DIR, TMP_DIR, canonical_dir, scope_dir
 from liftpath.recover import RECOVERY_LEVELS, build_recovery_points, recovery_tables
 from liftpath.report import run_eval
 from liftpath.scopes import build_sample
@@ -146,6 +147,30 @@ def step_eval(cfg: Config) -> None:
           f"{'PASS' if gate3['passes'] else 'FAIL'}")
 
 
+def step_app_data(cfg: Config) -> None:
+    folder = scope_dir(cfg)
+    suffix = "" if cfg.scope == "full" else f"_{cfg.scope}"
+    eval_path = REPORTS_DIR / f"eval_results{suffix}.json"
+    fairness_path = REPORTS_DIR / f"fairness_results{suffix}.json"
+    figures = {name: REPORTS_DIR / "figures" / name.replace(".png", f"{suffix}.png")
+               for name in FIGURES}
+    figures["synthetic_truth.png"] = REPORTS_DIR / "figures" / "synthetic_truth.png"
+    out = APP_DIR if cfg.scope == "full" else TMP_DIR / f"app_{cfg.scope}"
+    sizes = build_app_data(
+        cfg,
+        points=pd.read_parquet(folder / "decision_points.parquet"),
+        candidates=json.loads((folder / "candidates.json").read_text(encoding="utf-8")),
+        recovery_points=pd.read_parquet(folder / "recovery_points.parquet"),
+        eval_results=(json.loads(eval_path.read_text(encoding="utf-8"))
+                      if eval_path.exists() else None),
+        fairness=pd.read_json(fairness_path) if fairness_path.exists() else None,
+        figures=figures,
+        out_dir=out,
+    )
+    total = sum(sizes.values())
+    print(f"{out.as_posix()}: {len(sizes)} files, {total / 1e6:.2f} MB")
+
+
 def not_built(cfg: Config) -> None:
     print("not built yet")
 
@@ -159,6 +184,7 @@ HANDLERS = {
     "lifts": step_lifts,
     "recover": step_recover,
     "eval": step_eval,
+    "app-data": step_app_data,
 }
 
 

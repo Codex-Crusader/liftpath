@@ -19,13 +19,16 @@ RECOMMEND, NO_CLEAR_WINNER, ABSTAIN = "recommend", "no_clear_winner", "abstain"
 ESTIMATE_COLS = ["lift", "ci_low", "ci_high", "p1_avg", "p0_avg", "n_did", "n_did_not"]
 
 
-def estimate_lifts(points: pd.DataFrame, cell_cols: list[str], effort_col: str,
-                   treatment_cols: list[str], goal_col: str, cfg: Config) -> pd.DataFrame:
-    """Effort-matched lift of each treatment on the goal, per cell (SPEC section 10).
+BAND_COLS = ["n1", "k1", "u1", "n0", "k0", "u0", "base_rate", "p1", "p0", "w", "var"]
 
-    Empty cell_cols gives one pooled cell. The action column holds the treatment column name.
+
+def band_table(points: pd.DataFrame, cell_cols: list[str], effort_col: str,
+               treatment_cols: list[str], goal_col: str, cfg: Config) -> pd.DataFrame:
+    """Per cell, treatment and effort band: the SPEC section 10 counts and smoothed rates.
+
+    Only bands with n1 >= 1 and n0 >= 1 appear. The action column holds the treatment column.
     """
-    m, z = cfg.prior_strength, cfg.z
+    m = cfg.prior_strength
     cells = list(cell_cols) or [POOLED]
     df = points.assign(**{POOLED: True}) if not cell_cols else points
     df = df.assign(_student=df.groupby(STUDENT_KEY).ngroup(), _goal=df[goal_col].astype(int))
@@ -51,30 +54,50 @@ def estimate_lifts(points: pd.DataFrame, cell_cols: list[str], effort_col: str,
         bands["w"] = bands["n1"] * bands["n0"] / (bands["n1"] + bands["n0"])
         bands["var"] = (bands["p1"] * (1 - bands["p1"]) / (bands["u1"] + m)
                         + bands["p0"] * (1 - bands["p0"]) / (bands["u0"] + m))
-        bands = bands.assign(
-            w_diff=bands["w"] * (bands["p1"] - bands["p0"]),
-            w_p1=bands["w"] * bands["p1"], w_p0=bands["w"] * bands["p0"],
-            w2_var=bands["w"] ** 2 * bands["var"])
-        agg = bands.groupby(cells).agg(
-            sum_w=("w", "sum"), w_diff=("w_diff", "sum"), w_p1=("w_p1", "sum"),
-            w_p0=("w_p0", "sum"), w2_var=("w2_var", "sum"), n_did=("n1", "sum"),
-            n_did_not=("n0", "sum"), base_rate=("base_rate", "first"))
-        out = pd.DataFrame(index=agg.index)
-        out["action"] = treatment
-        out["lift"] = agg["w_diff"] / agg["sum_w"]
-        out["se"] = np.sqrt(agg["w2_var"]) / agg["sum_w"]
-        out["ci_low"] = out["lift"] - z * out["se"]
-        out["ci_high"] = out["lift"] + z * out["se"]
-        out["p1_avg"] = agg["w_p1"] / agg["sum_w"]
-        out["p0_avg"] = agg["w_p0"] / agg["sum_w"]
-        out["n_did"] = agg["n_did"].astype("int64")
-        out["n_did_not"] = agg["n_did_not"].astype("int64")
-        out["base_rate"] = agg["base_rate"]
-        parts.append(out.reset_index())
+        bands.insert(len(cells), "action", treatment)
+        parts.append(bands)
 
+    columns = [*cells, "action", effort_col, *BAND_COLS]
+    table = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=columns)
+    table = table[columns]
+    return table.drop(columns=POOLED) if not cell_cols else table
+
+
+def estimate_lifts(points: pd.DataFrame, cell_cols: list[str], effort_col: str,
+                   treatment_cols: list[str], goal_col: str, cfg: Config) -> pd.DataFrame:
+    """Effort-matched lift of each treatment on the goal, per cell (SPEC section 10).
+
+    Empty cell_cols gives one pooled cell. The action column holds the treatment column name.
+    """
+    cells = list(cell_cols) or [POOLED]
+    bands = band_table(points, cell_cols, effort_col, treatment_cols, goal_col, cfg)
+    if not cell_cols:
+        bands = bands.assign(**{POOLED: True})
+    bands = bands.assign(
+        w_diff=bands["w"] * (bands["p1"] - bands["p0"]),
+        w_p1=bands["w"] * bands["p1"], w_p0=bands["w"] * bands["p0"],
+        w2_var=bands["w"] ** 2 * bands["var"])
+    agg = bands.groupby([*cells, "action"]).agg(
+        sum_w=("w", "sum"), w_diff=("w_diff", "sum"), w_p1=("w_p1", "sum"),
+        w_p0=("w_p0", "sum"), w2_var=("w2_var", "sum"), n_did=("n1", "sum"),
+        n_did_not=("n0", "sum"), base_rate=("base_rate", "first"))
+    out = pd.DataFrame(index=agg.index)
+    out["lift"] = agg["w_diff"] / agg["sum_w"]
+    out["se"] = np.sqrt(agg["w2_var"]) / agg["sum_w"]
+    out["ci_low"] = out["lift"] - cfg.z * out["se"]
+    out["ci_high"] = out["lift"] + cfg.z * out["se"]
+    out["p1_avg"] = agg["w_p1"] / agg["sum_w"]
+    out["p0_avg"] = agg["w_p0"] / agg["sum_w"]
+    out["n_did"] = agg["n_did"].astype("int64")
+    out["n_did_not"] = agg["n_did_not"].astype("int64")
+    out["base_rate"] = agg["base_rate"]
+    # Keep the treatment order of the input, then the cell order.
+    order = {t: i for i, t in enumerate(treatment_cols)}
+    table = out.reset_index()
+    table = table.sort_values(["action", *cells], key=lambda c: c.map(order) if
+                              c.name == "action" else c, kind="stable").reset_index(drop=True)
     columns = [*cells, "action", "lift", "se", "ci_low", "ci_high", "p1_avg", "p0_avg",
                "n_did", "n_did_not", "base_rate"]
-    table = pd.concat(parts, ignore_index=True) if parts else pd.DataFrame(columns=columns)
     table = table[columns]
     return table.drop(columns=POOLED) if not cell_cols else table
 

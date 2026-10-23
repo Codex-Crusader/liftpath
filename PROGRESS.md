@@ -9,7 +9,7 @@
 | 3 | Lift engine and synthetic data | done (Gate 2 test 2 fails) |
 | 4 | Recommend, recover, privacy | done |
 | 5 | Baselines, evaluation, fairness | done |
-| 6 | App | not started |
+| 6 | App | done |
 | 7 | Docs | not started |
 | 8 | Planner (optional) | not started |
 
@@ -93,6 +93,15 @@
   - course_order and popular pick quiz often because quiz is a common activity in the generator, not because they measure its effect.
   - Net lift (pass): LiftPath +2.0 pp (-0.2 to +4.3), raw_success +2.3 pp, course_order +2.7 pp. Follower lift ranks raw_success above LiftPath here, although raw_success sends 43.5% of its picks to forumng, which has no effect. Follower lift uses the same effort bands as LiftPath and can reward effort-driven picks. Present the ground truth table next to follower lift.
 - Phase 5 fairness (full, pass): follower lift is positive in every group with 200 or more students except imd_band "unknown" (-0.9 pp, range -3.2 to +1.7). age_band 55<= has 91 students (small sample).
+- Phase 6: `lift.band_table` now holds the per band counts and rates. `estimate_lifts` uses it. On full data the level 0, 1 and 2 tables are the same as before (1,849, 736 and 128 rows).
+- Phase 6: `make eval` also writes `reports/fairness_results{suffix}.json`, so app-data can read the fairness table.
+- Phase 6: `make app-data` writes to `data/app/` for the full scope only. Other scopes write to `data/tmp/app_<scope>/`, so they never replace the committed app data. Full app data: 24 files, 0.98 MB.
+- Phase 6: App data contents: lift and best-action tables per goal and level, the level 0 audit bands, sampled test students (state columns and recommendations only, no outcomes and no activity flags), recovery test points with their recommendation, recovery tables, eval results, the fairness table, figures and `meta.json`. Counts below display_min_count are NULL. In the audit table, p1 and p0 are NULL in a suppressed row.
+- Phase 6: The app sorts students by their number of recommended weeks and opens on the first recommended week, so the first card is a real recommendation.
+- Phase 6: The app shows lifts in percentage points (pp). The card text from `recommend.explain` keeps whole percent, as in SPEC section 12.
+- Phase 6: The app uses the committed `reports/figures/synthetic_truth.png`. `make all` still does not build the synthetic scope.
+- Phase 6: The Teacher audit tab also shows the cell lift from the level 0 table. A hand check on one cell (AAA, early, high, high, forum) gives the same value (-2.0 pp).
+- Phase 6: `tests/test_app.py` builds synthetic app data in a temp folder from the generator and the committed synthetic eval reports, runs the app with AppTest, and also runs it with the distinction goal.
 
 ## Blocked
 - None.
@@ -100,4 +109,4 @@
 ## Method issues
 - Phase 3: Next-week effort control in tertiles leaves confounding for an action that rises with effort. On synthetic data, forumng has no true effect, but its pooled lift (0.063) is above the quiz lift (0.039). Inside a tertile, forum use still rises with clicks, and clicks rise with ability. Diagnostics with a ceil(pct * bins) rule show finer bins reduce the forumng lift but do not remove it: 5 bins give quiz 0.030 and forumng 0.040, and 10 bins give quiz 0.031 and forumng 0.034. A probe on level 0 cells (current effort and score band in the cell) gave quiz 0.041 and forumng 0.032, but it has no interval and is not a gate result. The user chose to keep SPEC sections 7 and 10. Phase 5 net lift and the synthetic truth figure must show this result.
 - Phase 5 (check before the phase): The shipped method uses level 0 cells, and it finds the true effect on synthetic data. This is a diagnostic, not a gate result. The level 0 lift tables (train points, cells with min(n_did, n_did_not) >= min_count) give a w-weighted mean lift of 0.042 for quiz (ci_low 0.026) and 0.033 for forumng. The combined se assumes independent cells, but the cells share students. On synthetic test points, LiftPath recommends quiz in 63% of its recommendations, url in 29%, glossary in 8% and forumng in 0%. The url and glossary picks are the SPEC section 20 limitation "Some winners can be chance results". The method stays as SPEC defines it.
-- Phase 4: The SPEC section 12 template says "Based on {n_did} and {n_did_not} students", but n_did and n_did_not count decision points (student-weeks). At level 1 and 2 they also add up across weeks. The text keeps the SPEC wording for now. Phase 6 and 7 must fix the wording or show unique students (u1 and u0, which the estimator already computes), with the user's agreement.
+- Phase 4: The SPEC section 12 template says "Based on {n_did} and {n_did_not} students", but n_did and n_did_not count decision points (student-weeks). At level 1 and 2 they also add up across weeks. The text keeps the SPEC wording for now. Phase 6 and 7 must fix the wording or show unique students (u1 and u0, which the estimator already computes), with the user's agreement. Phase 6: the app tables and the audit caption say "student-weeks". The card text still says "students" (SPEC wording).

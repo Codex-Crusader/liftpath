@@ -198,6 +198,8 @@ def write_fairness(cfg: Config, test: pd.DataFrame, status: pd.Series, actions: 
                           columns=[*STUDENT_KEY, *ATTRIBUTES])
     with_groups = test.merge(enr, on=STUDENT_KEY, how="left").assign(status=status.to_numpy())
     report = subgroup_report(with_groups, actions, goal, cfg)
+    (REPORTS_DIR / f"fairness_results{suffix(cfg)}.json").write_text(
+        report.to_json(orient="records", indent=2), encoding="utf-8")
     overall = float(results.set_index("name").loc["liftpath", "lift"])
     fairness_figure(report, overall, figures / f"fairness{suffix(cfg)}.png")
     lines = [f"# Fairness ({cfg.scope} scope, goal: pass)", "",

@@ -1,0 +1,25 @@
+{
+  "scope": "full",
+  "candidates": [
+    "oucontent",
+    "forumng",
+    "quiz",
+    "subpage",
+    "resource",
+    "ouwiki",
+    "url",
+    "glossary"
+  ],
+  "goals": [
+    "goal_pass",
+    "goal_distinction"
+  ],
+  "config": {
+    "min_count": 30,
+    "display_min_count": 5,
+    "prior_strength": 10,
+    "z": 1.96,
+    "low_score": 40
+  },
+  "students": 1050
+}
