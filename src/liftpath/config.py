@@ -32,6 +32,19 @@ class Config:
     gate_coverage_min: float
     app_students_per_course: int
     synthetic_students_per_presentation: int
+    plan_horizon_weeks: int
+    sim_worlds: tuple[str, ...]
+    sim_cohorts: int
+    sim_students_per_cohort: int
+    sim_dev_cohorts: int
+    sim_dev_students: int
+    sim_compliance: float
+    sim_explore_share: float
+    sim_min_first_stage: float
+    sim_boot: int
+    rescue_min_count: int
+    live_db_path: str
+    trap_disagree_min: float
     scope: str  # data_scope after the DATA_SCOPE override
 
 
@@ -47,5 +60,6 @@ def load_config(path: Path = Path("config.yaml")) -> Config:
     if scope not in SCOPES:
         raise ValueError(f"scope {scope!r} is not one of {SCOPES}")
 
-    values = {**raw, "exclude_types": tuple(raw["exclude_types"]), "scope": scope}
+    values = {**raw, "exclude_types": tuple(raw["exclude_types"]),
+              "sim_worlds": tuple(raw["sim_worlds"]), "scope": scope}
     return Config(**values)

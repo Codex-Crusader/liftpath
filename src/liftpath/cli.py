@@ -17,6 +17,7 @@ from liftpath.lift import best_actions, lift_tables, resolve_points
 from liftpath.paths import APP_DIR, RAW_DIR, REPORTS_DIR, TMP_DIR, canonical_dir, scope_dir
 from liftpath.recover import RECOVERY_LEVELS, build_recovery_points, recovery_tables
 from liftpath.report import run_eval
+from liftpath.route import item_schedule, score_transitions
 from liftpath.scopes import build_sample
 from liftpath.states import (
     build_decision_points,
@@ -41,6 +42,7 @@ STEPS = (
     "recover",
     "eval",
     "app-data",
+    "plan",
 )
 
 
@@ -171,6 +173,21 @@ def step_app_data(cfg: Config) -> None:
     print(f"{out.as_posix()}: {len(sizes)} files, {total / 1e6:.2f} MB")
 
 
+def step_plan(cfg: Config) -> None:
+    folder = scope_dir(cfg)
+    points = pd.read_parquet(folder / "decision_points.parquet")
+    candidates = json.loads((folder / "candidates.json").read_text(encoding="utf-8"))
+    out = folder / "plan"
+    out.mkdir(exist_ok=True)
+    transitions = score_transitions(points[points["split"] == "train"], candidates, cfg)
+    transitions.to_parquet(out / "transitions.parquet", index=False)
+    con = connect(cfg)
+    register_canonical(con, canonical_dir(cfg))
+    schedule = item_schedule(con, cfg)
+    schedule.to_parquet(out / "schedule.parquet", index=False)
+    print(f"transitions: {transitions.shape}, schedule: {schedule.shape}")
+
+
 def not_built(cfg: Config) -> None:
     print("not built yet")
 
@@ -185,6 +202,7 @@ HANDLERS = {
     "recover": step_recover,
     "eval": step_eval,
     "app-data": step_app_data,
+    "plan": step_plan,
 }
 
 

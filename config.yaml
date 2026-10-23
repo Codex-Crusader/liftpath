@@ -19,3 +19,16 @@ gate_variety_min_candidates: 4
 gate_coverage_min: 0.50
 app_students_per_course: 150
 synthetic_students_per_presentation: 1500
+plan_horizon_weeks: 4
+sim_worlds: [standard, hidden_confounder]
+sim_cohorts: 6
+sim_students_per_cohort: 1000
+sim_dev_cohorts: 2
+sim_dev_students: 200
+sim_compliance: 0.6
+sim_explore_share: 0.2
+sim_min_first_stage: 0.1
+sim_boot: 100
+rescue_min_count: 20
+live_db_path: data/live/live.db
+trap_disagree_min: 0.30

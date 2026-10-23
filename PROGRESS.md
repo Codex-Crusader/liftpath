@@ -10,8 +10,15 @@
 | 4 | Recommend, recover, privacy | done |
 | 5 | Baselines, evaluation, fairness | done |
 | 6 | App | done |
-| 7 | Docs | not started |
-| 8 | Planner (optional) | not started |
+| 7 | Docs | replaced by BUILD2 |
+| 8 | Planner (optional) | replaced by BUILD2 |
+| A | Route | done |
+| B | Simulator and learning loop | not started |
+| C | Trap comparison | not started |
+| D | Live mode and engine CLI | not started |
+| E | Rescue map | not started |
+| F | App restructure | not started |
+| G | Presentation package and docs | not started |
 
 ## Gate results
 - Gate 1 (variety): PASS on full data. 8 of 8 candidates have share >= 0.30. The lowest are glossary (0.432) and ouwiki (0.440). The sample scope has 6 of 8. Report: `reports/gate1_variety.md`.
@@ -103,11 +110,25 @@
 - Phase 6: The app uses the committed `reports/figures/synthetic_truth.png`. `make all` still does not build the synthetic scope.
 - Phase 6: The Teacher audit tab also shows the cell lift from the level 0 table. A hand check on one cell (AAA, early, high, high, forum) gives the same value (-2.0 pp).
 - Phase 6: `tests/test_app.py` builds synthetic app data in a temp folder from the generator and the committed synthetic eval reports, runs the app with AppTest, and also runs it with the distinction goal.
+- BUILD2: The user gave BUILD2 (phases A to G). It replaces BUILD.md Phase 7 and 8. BUILD2.md stays local like BUILD.md (`.git/info/exclude`). The BUILD2 config keys are in config.yaml and in `Config`. `sim_worlds` loads as a tuple.
+- Phase A: `route.score_transitions` links each train point to the same student at week + 1. It counts (module, week, score_band, next_effort_band, action) to (next_week_block, next_score_band), with n and goal counts k_goal_pass and k_goal_distinction. The action `_keep` holds all points. Rows with next_effort_band "none" are left out, because a plan effort is never "none".
+- Phase A: Projection back-off: level 0 is (module, week). Level 1 is (module, weeks w-1 to w+1). Level 2 is all modules, weeks w-1 to w+1. A level needs n >= min_count. The next score band is the mode. Ties go to the lower band. The next week block is the mode of the module's own KEEP rows at week w.
+- Phase A: Each step projects one week forward, also the last step. So the final projected state is at week w0 + plan_horizon_weeks.
+- Phase A: The projected goal rate of a state (module, week, score, effort) uses the targets of KEEP transitions from week - 1 (effort_band at week w equals next_effort_band at w - 1). Smoothing: (k + m * prior) / (n + m), where the prior is the goal rate of all targets in the same scope. The scope backs off like a projection. The typical rate projects score bands with KEEP from the same start to the same final week.
+- Phase A: A route stops when recommend() abstains, when a projection has no support, or when the week is past the last transition week of the module ("The course ends at week N").
+- Phase A: `item_schedule` returns course_id, item_id, item_type, action, active_day, active_week and clicks, ordered by (course_id, item_id). action and active_day are extra columns: action maps item types (fallback groups), and active_day is needed for rescue items. Items with no active day (no week_from and no clicks) are left out: full data has 6,268 of 6,364 items.
+- Phase A: Step items: items of the step type in the student's course at the step week. If there are none, the items at distance 1 week. Top 3 by total clicks. KEEP steps have no items.
+- Phase A: `rescue_card` uses the recovery point whose window holds the end of the student's week (due_day <= week_end < next_due_day), with score < low_score and status recommend. Items: old items of that type (active_day < due_day), top 3 by clicks. The app copy of recovery points has no due_day and next_due_day. Phase F must add them to `app_data.RECOVERY_COLS`.
+- Phase A: `make plan` writes `plan/transitions.parquet` and `plan/schedule.parquet` in the scope folder. Full data: 21,403 transition rows and 6,268 items. `make all` now runs `plan` before `app-data`.
+- Phase A: One route takes 0.125 s on full data. On 300 seeded full test points (pass goal), 261 routes have 4 steps, 72% have a recommend step, and 45% show items. Stop reasons: horizon 253, course end 31, no projection 16.
+- Phase A: `scripts/demo_cards.py` prints 2 full routes (they reach the horizon and have a recommend step with items). The pool puts students with a rescue recommendation first. No route in the first pool has a rescue card in its current window.
 
 ## Blocked
 - None.
 
 ## Method issues
+- Phase A: Route and typical projections are equal for 98.3% of routes (pass) and 98.0% (distinction), on 300 seeded full test points. The mean gap (route minus typical) is +0.59 pp (pass) and +0.16 pp (distinction). Reason: a route changes the projection only through the next score band, and the band seldom changes in one week. A Phase F "route vs typical" chart will mostly show two equal values. Ask the user.
+- Phase A: The week-window back-off can mix weeks before and after an assessment due date. Example: demo route 1 (GGG_2014J, week 5, forum). Forum users have too few rows at level 0, so the projection uses weeks w-1 to w+1. At week 7 this mixes week 6 (no scores yet, 9 rows) with weeks 7 and 8 (scores, 10 rows), and the mode says "none". The route then projects a pass rate of 50.9% against 78.3% for the typical path. The method is unchanged. Ask the user.
 - Phase 3: Next-week effort control in tertiles leaves confounding for an action that rises with effort. On synthetic data, forumng has no true effect, but its pooled lift (0.063) is above the quiz lift (0.039). Inside a tertile, forum use still rises with clicks, and clicks rise with ability. Diagnostics with a ceil(pct * bins) rule show finer bins reduce the forumng lift but do not remove it: 5 bins give quiz 0.030 and forumng 0.040, and 10 bins give quiz 0.031 and forumng 0.034. A probe on level 0 cells (current effort and score band in the cell) gave quiz 0.041 and forumng 0.032, but it has no interval and is not a gate result. The user chose to keep SPEC sections 7 and 10. Phase 5 net lift and the synthetic truth figure must show this result.
 - Phase 5 (check before the phase): The shipped method uses level 0 cells, and it finds the true effect on synthetic data. This is a diagnostic, not a gate result. The level 0 lift tables (train points, cells with min(n_did, n_did_not) >= min_count) give a w-weighted mean lift of 0.042 for quiz (ci_low 0.026) and 0.033 for forumng. The combined se assumes independent cells, but the cells share students. On synthetic test points, LiftPath recommends quiz in 63% of its recommendations, url in 29%, glossary in 8% and forumng in 0%. The url and glossary picks are the SPEC section 20 limitation "Some winners can be chance results". The method stays as SPEC defines it.
 - Phase 4: The SPEC section 12 template says "Based on {n_did} and {n_did_not} students", but n_did and n_did_not count decision points (student-weeks). At level 1 and 2 they also add up across weeks. The text keeps the SPEC wording for now. Phase 6 and 7 must fix the wording or show unique students (u1 and u0, which the estimator already computes), with the user's agreement. Phase 6: the app tables and the audit caption say "student-weeks". The card text still says "students" (SPEC wording).

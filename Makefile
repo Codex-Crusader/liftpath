@@ -1,7 +1,7 @@
 # Set DATA_SCOPE=full|sample|synthetic to select the data scope.
 CLI = uv run python -m liftpath.cli
 
-.PHONY: setup data sample synthetic profile states lifts recover eval app-data test lint app all
+.PHONY: setup data sample synthetic profile states lifts recover eval app-data plan test lint app all
 
 setup:
 	uv sync
@@ -30,6 +30,9 @@ recover:
 eval:
 	$(CLI) eval
 
+plan:
+	$(CLI) plan
+
 app-data:
 	$(CLI) app-data
 
@@ -43,4 +46,4 @@ lint:
 app:
 	uv run streamlit run app/streamlit_app.py
 
-all: data states lifts recover eval app-data
+all: data states lifts recover eval plan app-data

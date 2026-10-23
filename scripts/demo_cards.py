@@ -1,4 +1,4 @@
-"""Print 3 recommendation cards and 1 recovery card from the test data of the scope."""
+"""Print 3 recommendation cards, 1 recovery card and 2 routes from the test data of the scope."""
 
 import sys
 
@@ -16,8 +16,11 @@ from liftpath.lift import (
 from liftpath.paths import scope_dir
 from liftpath.recommend import State, label, recommend, recommend_points
 from liftpath.recover import RECOVERY_LEVELS, explain_recovery
+from liftpath.route import ITEM_NOTE, PROJECTION_NOTE, plan_route, rescue_card
 
 GOAL_NAMES = {"goal_pass": "pass", "goal_distinction": "distinction"}
+ROUTES = 2
+ROUTE_TRIES = 200
 
 
 def pick(points: pd.DataFrame, resolved: pd.DataFrame, status: str, seed: int,
@@ -73,8 +76,54 @@ def main() -> int:
     print(f"Recovery card: student {point['student_id']}, {point['course_id']}, "
           f"assessment {point['assessment_id']} (score {point['score']:.0f})\n"
           f"Status: {rec['status']}. Go back to: {step}.\n"
-          f"{explain_recovery(rec, point['module'], point['low_band'], cfg)}")
+          f"{explain_recovery(rec, point['module'], point['low_band'], cfg)}\n")
+    resolved_points = pd.concat(
+        [rtest, resolved.drop(columns=rtest.columns, errors="ignore")], axis=1)
+    print_routes(test, resolved_points, folder, cfg)
     return 0
+
+
+def full_route(route) -> bool:
+    return (len(route.steps) > 0 and route.stop_reason.startswith("The route reached")
+            and any(s.status == RECOMMEND and s.items for s in route.steps))
+
+
+def print_routes(test: pd.DataFrame, recovery: pd.DataFrame, folder, cfg) -> None:
+    """Print ROUTES routes that reach the horizon and have a recommend step with items."""
+    transitions = pd.read_parquet(folder / "plan" / "transitions.parquet")
+    schedule = pd.read_parquet(folder / "plan" / "schedule.parquet")
+    goal = "goal_pass"
+    tables = read_tables(folder / "lifts", goal)
+    # Students with a rescue card come first, so the demo also shows one.
+    rescued = test.merge(
+        recovery.loc[recovery["status"] == RECOMMEND, ["course_id", "student_id"]]
+        .drop_duplicates(), on=["course_id", "student_id"])
+    pool = pd.concat([rescued.sample(frac=1, random_state=cfg.seed),
+                      test.sample(ROUTE_TRIES, random_state=cfg.seed)]).head(ROUTE_TRIES)
+    shown = 0
+    for _, point in pool.iterrows():
+        route = plan_route(point, goal, tables, transitions, schedule, cfg)
+        if not full_route(route):
+            continue
+        shown += 1
+        print(f"Route {shown}: student {point['student_id']}, {point['course_id']}, "
+              f"week {point['week']}, goal: {GOAL_NAMES[goal]}, plan effort: {route.effort}")
+        rescue = rescue_card(point, recovery, schedule, cfg)
+        if rescue is not None:
+            print(f"  Rescue: after a score of {rescue.score:.0f} on assessment "
+                  f"{rescue.assessment_id}, go back to {rescue.label}. "
+                  f"Items: {list(rescue.items)}.\n  {rescue.rationale}")
+        for s in route.steps:
+            lift = (f", lift {s.lift:+.1%} (95% range {s.ci_low:+.1%} to {s.ci_high:+.1%})"
+                    if s.lift is not None else "")
+            items = f", items {list(s.items)}" if s.items else ""
+            print(f"  Week {s.week} ({s.score_band} scores): {s.label}{lift}{items}")
+        print(f"  Projected pass rate: route {route.projected_route:.1%}, typical "
+              f"{route.projected_typical:.1%}. {PROJECTION_NOTE}\n  {ITEM_NOTE}\n"
+              f"  {route.stop_reason}\n")
+        if shown == ROUTES:
+            return
+    print(f"Only {shown} of {ROUTES} routes reach the horizon in {ROUTE_TRIES} tries.")
 
 
 if __name__ == "__main__":
