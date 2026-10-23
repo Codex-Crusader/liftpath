@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from liftpath.config import load_config
+from liftpath.fairness import SMALL_SAMPLE_STUDENTS
 from liftpath.lift import ABSTAIN, LEVELS, NO_CLEAR_WINNER, RECOMMEND
 from liftpath.recommend import State, label, recommend, show_count, situation
 from liftpath.recover import explain_recovery
@@ -105,16 +106,20 @@ def student_tab(meta: dict, cfg) -> None:
     goal = c4.radio("Goal", list(GOAL_NAMES), format_func=GOAL_NAMES.get)
     module = c1.selectbox("Module", sorted(students["module"].unique()))
     in_module = students[students["module"] == module]
-    # Students with the most recommended weeks come first, so the demo opens on a real card.
-    rec_weeks = (in_module[f"{goal}_status"] == RECOMMEND).groupby(
+    # Students with the most level 0 recommendations come first, so the demo opens on a card
+    # with the most specific evidence.
+    is_rec = in_module[f"{goal}_status"] == RECOMMEND
+    counts = pd.DataFrame({"level0": is_rec & (in_module[f"{goal}_level"] == 0),
+                           "any": is_rec}).groupby(
         [in_module["course_id"], in_module["student_id"]]).sum()
-    keys = rec_weeks.sort_values(ascending=False, kind="stable").index
+    keys = counts.sort_values(["level0", "any"], ascending=False, kind="stable").index
     options = [f"{student} ({course})" for course, student in keys]
     choice = c2.selectbox("Student", options)
     student_id = int(choice.split(" ")[0])
     rows = in_module[in_module["student_id"] == student_id].sort_values("week")
     weeks = rows["week"].tolist()
-    recommended = rows.loc[rows[f"{goal}_status"] == RECOMMEND, "week"].tolist()
+    recommended = rows[rows[f"{goal}_status"] == RECOMMEND].sort_values(
+        [f"{goal}_level", "week"])["week"].tolist()
     first = weeks.index(recommended[0]) if recommended else 0
     week = c3.selectbox("Week", weeks, index=first)
     row = rows[rows["week"] == week].iloc[0]
@@ -220,7 +225,7 @@ def eval_tab(cfg) -> None:
         st.write("Follower lift can reward activities that busy students do anyway. Synthetic "
                  "data has a known truth: only quizzes help, and forum use only follows effort. "
                  "LiftPath sends none of its recommendations to the forum. Raw success sends "
-                 "most of its picks there.")
+                 "43.5% of its picks there.")
         st.image(str(truth), width="stretch")
 
 
@@ -230,7 +235,7 @@ def fairness_tab(cfg) -> None:
         st.info("No fairness results. Run `make eval` and then `make app-data`.")
         return
     st.write("LiftPath results per group on test data, goal: pass. A hollow dot marks a small "
-             "sample (fewer than 200 students).")
+             f"sample (fewer than {SMALL_SAMPLE_STUDENTS} students).")
     rows = report.iloc[::-1]
     labels = [f"{r.attribute}: {r.group}" for r in rows.itertuples()]
     lift, low, high = (100 * rows[c] for c in ("lift", "ci_low", "ci_high"))

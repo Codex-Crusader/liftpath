@@ -97,7 +97,8 @@
 - Phase 6: `make eval` also writes `reports/fairness_results{suffix}.json`, so app-data can read the fairness table.
 - Phase 6: `make app-data` writes to `data/app/` for the full scope only. Other scopes write to `data/tmp/app_<scope>/`, so they never replace the committed app data. Full app data: 24 files, 0.98 MB.
 - Phase 6: App data contents: lift and best-action tables per goal and level, the level 0 audit bands, sampled test students (state columns and recommendations only, no outcomes and no activity flags), recovery test points with their recommendation, recovery tables, eval results, the fairness table, figures and `meta.json`. Counts below display_min_count are NULL. In the audit table, p1 and p0 are NULL in a suppressed row.
-- Phase 6: The app sorts students by their number of recommended weeks and opens on the first recommended week, so the first card is a real recommendation.
+- Phase 6: The app sorts students by their number of level 0 recommendations, then by all recommendations. It opens on the first level 0 recommended week, so the first card uses the most specific evidence.
+- Phase 6: SPEC section 19 allows the OULAD student ids in `data/app/`, because they are already pseudonymous. The app data adds no other identifiers.
 - Phase 6: The app shows lifts in percentage points (pp). The card text from `recommend.explain` keeps whole percent, as in SPEC section 12.
 - Phase 6: The app uses the committed `reports/figures/synthetic_truth.png`. `make all` still does not build the synthetic scope.
 - Phase 6: The Teacher audit tab also shows the cell lift from the level 0 table. A hand check on one cell (AAA, early, high, high, forum) gives the same value (-2.0 pp).
