@@ -35,6 +35,7 @@ header[data-testid="stHeader"] {{background:transparent;}}
   background:linear-gradient(135deg, {DARK_SURFACE} 0%, #1a2943 100%);
   border:1px solid {DARK_BORDER}; border-radius:16px; animation:lp-fade .35s ease-out;}}
 .lp-top img {{width:52px; height:52px; flex:0 0 52px;}}
+.lp-top .txt {{flex:1 1 auto; min-width:0;}}
 .lp-top .name {{font-size:1.55rem; font-weight:800; letter-spacing:.2px; color:{DARK_TEXT};
   line-height:1.1;}}
 .lp-top .pitch {{color:{DARK_TEXT_SECONDARY}; font-size:.95rem; margin-top:2px;}}
@@ -59,6 +60,27 @@ header[data-testid="stHeader"] {{background:transparent;}}
 [data-testid="stImage"] img {{border-radius:12px;}}
 [data-testid="stCaptionContainer"] {{color:{DARK_MUTED};}}
 
+/* Phone width. */
+@media (max-width: 640px) {{
+  [data-testid="stMainBlockContainer"] {{padding-left:1rem; padding-right:1rem;
+    padding-top:1.4rem;}}
+  .lp-top {{flex-wrap:wrap; gap:10px 12px; padding:12px 14px;}}
+  .lp-top img {{width:40px; height:40px; flex-basis:40px;}}
+  .lp-top .name {{font-size:1.3rem;}}
+  .lp-top .pitch {{font-size:.86rem;}}
+  .lp-top .txt {{flex:1 1 0;}}
+  .lp-top .tag {{margin-left:52px; flex:0 0 auto; max-width:calc(100% - 52px);
+    white-space:normal; font-size:.75rem; order:3;}}
+  .lp-top::after {{content:""; order:2; flex-basis:100%; height:0;}}
+  .stTabs [role="tablist"] {{flex-wrap:wrap; overflow:visible; position:static;}}
+  .stTabs [role="tab"] {{padding:7px 12px;}}
+  [data-testid="stTable"] {{overflow-x:auto;}}
+  [data-testid="stTable"] table {{min-width:600px;}}
+  /* Dense charts keep a readable width and scroll sideways in their own box. */
+  .st-key-rescue_chart, .st-key-sim_pass_chart {{overflow-x:auto;}}
+  .st-key-rescue_chart > div, .st-key-sim_pass_chart > div {{min-width:640px;}}
+}}
+
 .lp-splash {{position:fixed; inset:0; z-index:9999; display:flex; flex-direction:column;
   align-items:center; justify-content:center; gap:18px; background:{DARK_BG};}}
 .lp-splash img {{width:120px; height:120px; animation:lp-pulse 1.6s ease-in-out infinite;}}
@@ -78,7 +100,7 @@ def global_styles() -> None:
 
 def top_bar(pitch: str, tag: str) -> None:
     st.markdown(
-        f'<div class="lp-top"><img src="{LOGO_URL}" alt="LiftPath logo"><div>'
+        f'<div class="lp-top"><img src="{LOGO_URL}" alt="LiftPath logo"><div class="txt">'
         f'<div class="name">LiftPath</div><div class="pitch">{html.escape(pitch)}</div></div>'
         f'<div class="tag">{html.escape(tag)}</div></div>', unsafe_allow_html=True)
 

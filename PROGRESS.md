@@ -219,6 +219,9 @@
 - Teacher view status colors have dark steps (4.5:1 or more on the card color) and always show with a text label.
 - Slide 10 now shows `reports/slides/teacher_view.png`, a screenshot of the app (FFF, week 19), joined from two captures. It is not an output of `make figures`.
 
+- Phone width (390 px, checked in headless Edge on all 7 tabs): the page never scrolls sideways. At 640 px or less, the top bar puts the label under the name, the tab bar wraps onto two rows and does not stay at the top, the teacher view cards show two by two without the long text, and the rule tables in Settings and the Rescue map and Simulator pass-rate charts keep a readable width and scroll sideways in their own box. App chart titles longer than 40 characters wrap onto a second line (`style.TITLE_WRAP_CHARS`). The Settings toggle label is now "Show percentages", with the long text as help.
+- `server.headless = true` in `.streamlit/config.toml`. This turns off the Streamlit developer pop-up ("Help agents write better apps") that covered the top bar on a new browser. `make app` no longer opens a browser tab. Open http://localhost:8501 yourself.
+
 ## Blocked
 - None.
 

@@ -5,6 +5,8 @@ validator in this order. Three slots are below 3:1 against the surface, so chart
 them carry direct labels.
 """
 
+import textwrap
+
 SURFACE = "#fcfcfb"
 TEXT = "#0b0b0b"
 TEXT_SECONDARY = "#52514e"
@@ -41,6 +43,9 @@ DARK_TEXT = "#e6e9ef"
 DARK_TEXT_SECONDARY = "#b4bccb"
 DARK_MUTED = "#8b95a7"
 DARK_GRID = "#26324a"
+# Plotly does not wrap titles. App chart titles longer than this wrap onto a second line.
+TITLE_WRAP_CHARS = 40
+TITLE_LINE_PX = 22
 DARK_BLUE = "#3987e5"
 
 LIGHT_TO_DARK = {
@@ -84,6 +89,15 @@ def dark_figure(fig):
 
     spec = fig.to_dict()
     spec["layout"].pop("template", None)
+    title = spec["layout"].get("title", {})
+    if len(title.get("text") or "") > TITLE_WRAP_CHARS and "<br>" not in title["text"]:
+        lines = textwrap.wrap(title["text"], TITLE_WRAP_CHARS)
+        title["text"] = "<br>".join(lines)
+        margin = spec["layout"].setdefault("margin", {})
+        extra = TITLE_LINE_PX * (len(lines) - 1)
+        margin["t"] = margin.get("t", 100) + extra
+        if spec["layout"].get("height"):
+            spec["layout"]["height"] += extra
     out = go.Figure(to_dark(spec))
     axis = {"automargin": True, "gridcolor": DARK_GRID, "linecolor": DARK_BORDER,
             "zerolinecolor": DARK_MUTED,

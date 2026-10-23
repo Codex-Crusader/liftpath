@@ -46,7 +46,7 @@ Open the "Settings" tab. Under "Your preferences" you can:
 
 - select the course and the goal that open first;
 - set after how many weeks without clicks a student goes to "No recent activity";
-- add percentages to the suggestions in the list and the download;
+- turn on "Show percentages" to add percentages to the suggestions in the list and the download;
 - write the names that your students see for each activity type, for example "Weekly quiz" for "quizzes";
 - write your own message. `$suggestion` is replaced with the suggestion for the student, and `$student` with the student ID.
 

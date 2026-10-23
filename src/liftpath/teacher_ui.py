@@ -95,6 +95,14 @@ CSS = f"""
 .lp-plan td.w {{color:{DARK_TEXT_SECONDARY}; width:140px;}}
 [data-testid="stCode"] pre, [data-testid="stCode"] code {{font-size:0.98rem;
   font-family:"Source Sans", "Source Sans Pro", sans-serif !important;}}
+@media (max-width: 640px) {{
+  .lp-tiles {{grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px;}}
+  .lp-tile {{padding:10px 12px; border-left-width:4px;}}
+  .lp-tile .n {{font-size:1.5rem;}}
+  .lp-tile .d {{display:none;}}
+  .lp-hero {{padding:14px 16px; gap:8px 14px;}}
+  .lp-hero .big {{font-size:2rem;}}
+}}
 </style>
 """
 
@@ -384,8 +392,9 @@ def settings_tab(ctx: TeacherContext) -> None:
                                 "without clicks", min_value=1,
                                 max_value=ctx.cfg.teacher_inactive_weeks_max,
                                 value=prefs.inactive_weeks, key="set_inactive")
-        numbers = c2.toggle("Add percentages to the suggestions in the list and the download",
-                            value=prefs.show_numbers, key="set_numbers")
+        numbers = c2.toggle("Show percentages", value=prefs.show_numbers, key="set_numbers",
+                            help="Add percentages to the suggestions in the list and the "
+                                 "download.")
         st.markdown("**Activity names**")
         st.caption("Write the names that your students see in your course. Leave a cell empty "
                    "to keep the LiftPath name.")

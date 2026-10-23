@@ -14,3 +14,5 @@ toolbarMode = "minimal"
 
 [server]
 enableStaticServing = true
+# Headless: do not open a browser tab, and do not show the Streamlit developer pop-up.
+headless = true
