@@ -1,4 +1,9 @@
-<p align="center"><img src="app/assets/logo.png" width="140" alt="LiftPath logo"></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="app/static/logo_white.png">
+    <img src="app/assets/logo.png" width="140" alt="LiftPath logo">
+  </picture>
+</p>
 
 # LiftPath
 
