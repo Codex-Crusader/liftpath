@@ -69,6 +69,7 @@
 - Phase 4: SPEC section 13 has no rationale template for recovery. `explain_recovery` uses the section 12 style: "those who went back to earlier <label>". Level 1 adds "(compared across all courses)".
 - Phase 4: `suppress_counts` also hides a count of 0, because 0 is below display_min_count. It keeps an earlier `suppressed` flag when you call it again.
 - Phase 4: Full recovery points: 6,159 (3,892 train, 2,267 test), no repeated keys. Recovery rate (goal_recover): 0.497. Test status shares: recommend 0.862, no_clear_winner 0.138.
+- Phase 4: The recovery effort rank population is the triggered points (score below low_score, a next assessment exists) with window clicks > 0, within (course_id, assessment_id). SPEC section 13 does not say whose clicks form the ranking.
 - Phase 4: Two of the three demo cards recommend the discussion forum. This agrees with the Phase 3 method issue: tertile effort control can rate effort-driven actions too high.
 
 ## Blocked
@@ -76,3 +77,4 @@
 
 ## Method issues
 - Phase 3: Next-week effort control in tertiles leaves confounding for an action that rises with effort. On synthetic data, forumng has no true effect, but its pooled lift (0.063) is above the quiz lift (0.039). Inside a tertile, forum use still rises with clicks, and clicks rise with ability. Diagnostics with a ceil(pct * bins) rule show finer bins reduce the forumng lift but do not remove it: 5 bins give quiz 0.030 and forumng 0.040, and 10 bins give quiz 0.031 and forumng 0.034. A probe on level 0 cells (current effort and score band in the cell) gave quiz 0.041 and forumng 0.032, but it has no interval and is not a gate result. The user chose to keep SPEC sections 7 and 10. Phase 5 net lift and the synthetic truth figure must show this result.
+- Phase 4: The SPEC section 12 template says "Based on {n_did} and {n_did_not} students", but n_did and n_did_not count decision points (student-weeks). At level 1 and 2 they also add up across weeks. The text keeps the SPEC wording for now. Phase 6 and 7 must fix the wording or show unique students (u1 and u0, which the estimator already computes), with the user's agreement.
