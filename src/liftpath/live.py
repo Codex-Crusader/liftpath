@@ -244,6 +244,8 @@ def refresh_tables(con: sqlite3.Connection, train: pd.DataFrame, candidates: lis
                    folder: Path | None = None) -> dict[str, dict[int, pd.DataFrame]]:
     """Append the live points to the train points, rebuild the lift tables and write them
     (with suppressed counts) to live_dir/tables. Return the unsuppressed tables."""
+    if (train["split"] == "test").any():
+        raise ValueError("Test points must not enter the live lift tables.")
     live = live_points(con, candidates, cutoffs, cfg)
     # Train ids are integers and live ids are text. One type keeps the student key sortable.
     points = pd.concat([train.assign(student_id=train["student_id"].astype(str)), live],

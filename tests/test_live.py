@@ -129,6 +129,9 @@ def test_live_points_and_refresh(tmp_path, cfg, cutoffs):
     live_dir = tmp_path / "live"
     tables = refresh_tables(live_con, train, CANDIDATES, cutoffs, cfg, live_dir)
     assert live_tables_exist("goal_pass", live_dir)
+    with pytest.raises(ValueError, match="Test points"):
+        refresh_tables(live_con, train.assign(split="test"), CANDIDATES, cutoffs, cfg,
+                       tmp_path / "other")
     loaded = load_lift_tables("goal_pass", tmp_path / "no_app", live_dir)
     assert len(loaded[2]) == len(tables["goal_pass"][2])
     quiz = tables["goal_pass"][2].query("action == 'quiz'")
