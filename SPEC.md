@@ -8,7 +8,7 @@ Pitch: "Not what students like you did. What helped students like you."
 ## 2. Source data: OULAD
 - Name: Open University Learning Analytics Dataset.
 - License: CC BY 4.0. Cite: Kuzilek J., Hlosta M., Zdrahal Z. "Open University Learning Analytics dataset." Scientific Data 4, 2017. (Verify the citation details in Phase 7.)
-- Expected files and headers (UNVERIFIED: Phase 1 must check them):
+- Files and headers (verified in Phase 1 against the UCI download):
 
 | File | Columns |
 |---|---|
@@ -29,7 +29,7 @@ Pitch: "Not what students like you did. What helped students like you."
   - One student can be in several presentations. The key is (course_id, student_id).
   - final_result values: Pass, Distinction, Fail, Withdrawn.
   - assessment_type values: TMA, CMA, Exam.
-- Expected studentVle row count: about 10.6 million (UNVERIFIED).
+- studentVle row count: 10,655,280 (verified in Phase 1).
 
 ## 3. Canonical schema
 Parquet files in `data/processed/<scope>/canonical/`. Every adapter (OULAD, synthetic, future organizer data) must produce exactly these tables.
